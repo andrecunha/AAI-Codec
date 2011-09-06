@@ -1,9 +1,10 @@
 This project is a simple, lossless audio codec, made as an assigment for the "Multimedia and Hypermedia" course. It supports three encoding/decoding methods:
+
 	- Delta encoding;
 	- Run-length encoding;
 	- Huffman encoding.
 
-The students involved in this projects are:
+The students involved in this project are:
 
 	- André Márcio de Lima Curvello;
 	- Andre Luiz Verucci da Cunha;

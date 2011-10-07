@@ -2,7 +2,7 @@ CC = gcc
 INCLUDE = ../include/
 CFLAGS = -ansi -Wall
 
-all: pq_test bit_test
+all: bit_test
 
 
 clean:

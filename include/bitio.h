@@ -8,8 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Verificar como fica a questão de múltiplos tamanhos de blocos. */
-
 /*! \var typedef unsigned char byte
  *  \brief A type definition to represent a byte.
  */
@@ -20,12 +18,15 @@ typedef unsigned char byte;
  */
 struct _bitbuffer {
 	size_t size; /*!< The number of bytes allocated for "data". */
-	unsigned long n_bytes; /*!< The effective number of bytes stored in the buffer (including the possibly incomplete fist and last bytes). */
+	unsigned long n_bytes; /*!< The effective number of bytes stored in the buffer (including the possibly incomplete first and last bytes). */
 	unsigned int bits_last; /*!< The number of bits effectively used in the last byte. */
-	unsigned int bits_offset; /*!< The number of bits to de skipped in the first byte. */
+	unsigned int bits_offset; /*!< The number of bits to be skipped in the first byte. */
 	byte *data, *original_data; /*!< The data itself. */
 };
 
+/*! \var typedef struct _bitbuffer bitbuffer
+ *  \brief A type definition to represent the FIFO bit buffer.
+ */
 typedef struct _bitbuffer bitbuffer;
 
 /*! \fn int binit(bitbuffer *b, unsigned long size)
@@ -35,7 +36,7 @@ typedef struct _bitbuffer bitbuffer;
  *  \param size The maximum size of the buffer (the ammount of memory to be allocated).
  *  \return 0 if the buffer could be allocated; 1 otherwise.
  */
-int binit(bitbuffer *b, unsigned long size);
+int binit(bitbuffer *b, size_t size);
 
 /*! \fn int bwrite(bitbuffer *b, byte data)
  *  \brief Write a bit at the end of the bit buffer.
@@ -52,7 +53,7 @@ int bwrite(bitbuffer *b, byte data);
 /*! \fn int bread(bitbuffer *b, byte *out)
  *  \brief Reads a bit from the beginning of the bit buffer.
  *
- *  \param b The bit buffer that is to be read.
+ *  \param b The bit buffer to be read.
  *  \param out Where the read bit will be stored.
  *
  *  \return 0 on success; 1 otherwise.
@@ -62,7 +63,7 @@ int bread(bitbuffer *b, byte *out);
 /*! \fn int bflush(bitbuffer *b, FILE *f)
  *  \brief Flushes the buffer to a file.
  *
- *  \param b The bit buffer that is to be flushed.
+ *  \param b The bit buffer to be flushed.
  *  \param f The file where the buffer will be flushed to.
  *
  *  \return 0 on success; 1 otherwise.

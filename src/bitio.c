@@ -73,11 +73,30 @@ int bread(bitbuffer *b, byte *out)
 }
 
 int bflush(bitbuffer *b, FILE *f)
-{
-	if (fwrite(b, sizeof(b->size)+sizeof(b->n_bytes)+sizeof(b->bits_last)+sizeof(b->bits_offset), 1, f) != 1)
-		return 1;
+{	
+	if(fwrite(&b->size, sizeof(size_t), 1, f)!=1) return 1;	
+	if(fwrite(&b->n_bytes, sizeof(unsigned long), 1, f)!=1) return 1;
+	if(fwrite(&b->bits_last, sizeof(unsigned int), 1, f)!=1) return 1;
+	if(fwrite(&b->bits_offset, sizeof(unsigned int), 1, f)!=1) return 1;
 
 	if (fwrite(b->data, sizeof(byte), b->size, f) != b->size)
+		return 1;
+
+	return 0;
+}
+
+int bget(bitbuffer *b, FILE *f)
+{	
+	if(fread(&b->size, sizeof(size_t), 1, f)!=1) return 1;	
+	if(fread(&b->n_bytes, sizeof(unsigned long), 1, f)!=1) return 1;
+	if(fread(&b->bits_last, sizeof(unsigned int), 1, f)!=1) return 1;
+	if(fread(&b->bits_offset, sizeof(unsigned int), 1, f)!=1) return 1;
+	b->data = b->original_data = malloc(b->size);
+
+	if (b->data) memset(b->data, 0, b->size);
+	else return 1;	
+	
+	if (fread(b->data, sizeof(byte), b->size, f) != b->size)
 		return 1;
 
 	return 0;

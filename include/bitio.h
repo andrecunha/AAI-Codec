@@ -70,6 +70,16 @@ int bread(bitbuffer *b, byte *out);
  */
 int bflush(bitbuffer *b, FILE *f);
 
+/*! \fn int bget(bitbuffer *b, FILE *f)
+ *  \brief Reads the bit buffer from a file.
+ *
+ *  \param b The bit buffer to be flushed.
+ *  \param f The file where the buffer will be flushed to.
+ *
+ * \return 0 on success; 1 otherwise.
+ */
+int bget(bitbuffer *b, FILE *f);
+
 /*! \fn void bprint(bitbuffer *b)
  *  \brief Prints the buffer to the standard output. Useful for debugging.
  *

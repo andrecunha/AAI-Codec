@@ -17,6 +17,11 @@ int main (int argc, char* argv[])
 			bwrite(b, 1);
 
 	bprint(b);
+	byte d;
+	while(!bempty(b)){
+		bread(b,&d);
+		printf("%x\n", d);
+	}
 	
 
 	bflush(b, fp_out);
@@ -26,14 +31,10 @@ int main (int argc, char* argv[])
 
 	bitbuffer *bin = malloc(sizeof(bitbuffer));
 	bget(bin, fp_in);
-	bprint(b);
-	bprint(bin);
+	//bprint(b);
+	//bprint(bin);
 
-	byte d;
-	while(!bempty(bin)){
-		bread(bin,&d);
-		printf("%x\n", d);
-	}
+    bprint(bin);
 	fclose(fp_in);
 
 	bdestroy(bin);

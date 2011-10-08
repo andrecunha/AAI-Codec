@@ -25,7 +25,6 @@ int bwrite(bitbuffer *b, byte data)
 	/* If the last byte is fully occupied, try to store the bit on the next byte. */
 	if (b->bits_last == 8) {
 		b->n_bytes++;
-
 		if (b->n_bytes > b->size)
 			return 1;
 
@@ -39,7 +38,7 @@ int bwrite(bitbuffer *b, byte data)
 		b->data[b->n_bytes-1] |= (1 << (8-b->bits_last-1));
 
 	b->bits_last++;
-
+    
 	return 0;
 }
 
@@ -67,7 +66,7 @@ int bread(bitbuffer *b, byte *out)
 
 	*out &= 1;
 
-	(b->bits_offset)++;
+	b->bits_offset++;
 
 	return 0;
 }
@@ -75,11 +74,9 @@ int bread(bitbuffer *b, byte *out)
 int bflush(bitbuffer *b, FILE *f)
 {	
 	if(fwrite(&b->size, sizeof(size_t), 1, f)!=1) return 1;	
-	if(fwrite(&b->n_bytes, sizeof(unsigned long), 1, f)!=1) return 1;
 	if(fwrite(&b->bits_last, sizeof(unsigned int), 1, f)!=1) return 1;
-	if(fwrite(&b->bits_offset, sizeof(unsigned int), 1, f)!=1) return 1;
 
-	if (fwrite(b->data, sizeof(byte), b->size, f) != b->size)
+	if (fwrite(b->original_data, sizeof(byte), b->size, f) != b->size)
 		return 1;
 
 	return 0;
@@ -88,9 +85,9 @@ int bflush(bitbuffer *b, FILE *f)
 int bget(bitbuffer *b, FILE *f)
 {	
 	if(fread(&b->size, sizeof(size_t), 1, f)!=1) return 1;	
-	if(fread(&b->n_bytes, sizeof(unsigned long), 1, f)!=1) return 1;
 	if(fread(&b->bits_last, sizeof(unsigned int), 1, f)!=1) return 1;
-	if(fread(&b->bits_offset, sizeof(unsigned int), 1, f)!=1) return 1;
+    b->n_bytes = b->size;
+    b->bits_offset = 0;
 	b->data = b->original_data = malloc(b->size);
 
 	if (b->data) memset(b->data, 0, b->size);

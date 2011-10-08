@@ -18,8 +18,8 @@ typedef unsigned char byte;
  */
 struct _bitbuffer {
 	size_t size; /*!< The number of bytes allocated for "data". */
-	unsigned long n_bytes; /*!< The effective number of bytes stored in the buffer (including the possibly incomplete first and last bytes). */
-	unsigned int bits_last; /*!< The number of bits effectively used in the last byte. */
+	unsigned long n_bytes; /*!< The effective number of bytes stored in the buffer (including the possibly incomplete first and last bytes). */	
+    unsigned int bits_last; /*!< The number of bits effectively used in the last byte. */
 	unsigned int bits_offset; /*!< The number of bits to be skipped in the first byte. */
 	byte *data, *original_data; /*!< The data itself. */
 };
@@ -73,7 +73,6 @@ int bread(bitbuffer *b, byte *out);
 int bflush(bitbuffer *b, FILE *f);
 
 /*! \fn int bget(bitbuffer *b, FILE *f)
- *  \brief Reads the bit buffer from a file.
  *
  *  \param b The bit buffer to be flushed.
  *  \param f The file where the buffer will be flushed to.

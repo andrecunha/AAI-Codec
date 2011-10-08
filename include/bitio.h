@@ -66,6 +66,8 @@ int bread(bitbuffer *b, byte *out);
  *  \param b The bit buffer to be flushed.
  *  \param f The file where the buffer will be flushed to.
  *
+ *  \warning Do not use it after bread() of bit buffer b.
+ *
  *  \return 0 on success; 1 otherwise.
  */
 int bflush(bitbuffer *b, FILE *f);

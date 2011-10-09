@@ -10,14 +10,16 @@ int main (int argc, char* argv[])
 	binit(b, 2);
 	
 	int i;
-	for(i=0; i<14; i++)
+	for(i=0; i<33; i++){
 		if(i<8)
 			bwrite(b, 0);
 		else
 			bwrite(b, 1);
+    }
 
 	bprint(b);
 	byte d;
+    i=0;
 	while(!bempty(b)){
 		bread(b,&d);
 		printf("%x\n", d);
@@ -31,8 +33,8 @@ int main (int argc, char* argv[])
 
 	bitbuffer *bin = malloc(sizeof(bitbuffer));
 	bget(bin, fp_in);
-	//bprint(b);
-	//bprint(bin);
+	/*bprint(b);
+	bprint(bin);*/
 
     bprint(bin);
 	fclose(fp_in);

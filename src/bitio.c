@@ -18,9 +18,18 @@ int binit(bitbuffer *b, size_t size)
 
 int bwrite(bitbuffer *b, byte data)
 {
-	/* If buffer is full, return error. */
-	if (!b->size || bfull(b))
-		return 1;
+    int difference;
+
+	/* If buffer is full, realloc. */
+	if (!b->size || bfull(b)){
+        difference = b->data - b->original_data;
+        b->original_data = realloc(b->original_data, ++b->size);
+        b->data = b->original_data + difference;       
+        b->n_bytes++;
+        b->bits_last=0;
+        b->bits_offset=0;
+        memset(b->original_data+b->size-1, 0, sizeof(byte));
+    }
 
 	/* If the last byte is fully occupied, try to store the bit on the next byte. */
 	if (b->bits_last == 8) {
@@ -44,11 +53,12 @@ int bwrite(bitbuffer *b, byte data)
 
 int bread(bitbuffer *b, byte *out)
 {
-	if(bempty(b))
+	if(bempty(b)){
 		return 1;
+    }
 
 	/* If there is only one byte, and the offset is equal to the number of bits in the last byte, than there is no bit left in the buffer. */
-	if ((b->n_bytes == 1) && (b->bits_offset+1 == b->bits_last)){
+	if ((b->n_bytes == 1) && (b->bits_offset == b->bits_last)){
 		b->n_bytes = 0;
 		b->bits_offset = 0;
 		return 1;
@@ -67,7 +77,7 @@ int bread(bitbuffer *b, byte *out)
 	*out &= 1;
 
 	b->bits_offset++;
-
+    
 	return 0;
 }
 
@@ -101,7 +111,7 @@ int bget(bitbuffer *b, FILE *f)
 
 void bprint(bitbuffer *b)
 {
-	printf("bprint: size = %lu\n", b->size);
+	printf("bprint: size = %u\n", b->size);
 	printf("bprint: n_bytes = %lu\n", b->n_bytes);
 	printf("bprint: bits_last = %u\n", b->bits_last);
 	printf("bprint: bits_offset = %u\n", b->bits_offset);

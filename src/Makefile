@@ -2,7 +2,7 @@ CC = gcc
 INCLUDE = ../include/
 CFLAGS = -ansi -Wall -g
 
-all: bit_test
+all: wav_test
 
 
 clean:
@@ -13,5 +13,8 @@ pq_test: pq_test.c priority_queue.c
 
 bit_test: bit_test.c bitio.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o bit_test bit_test.c bitio.c
+
+wav_test: wav_test.c wavreader.c
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o wav_test wav_test.c wavreader.c
 
 

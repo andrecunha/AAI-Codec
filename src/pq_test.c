@@ -12,7 +12,7 @@ int main (int argc, char* argv[])
 	priority_queue *myPQ = malloc(sizeof(priority_queue));
 	NODE_TYPE a=3, b=2, c=1, d=0, e=-1;
 
-	pq_init(myPQ);
+	pq_init(myPQ, 5);
 
 	pq_insert(myPQ, &a);
 	pq_insert(myPQ, &b);

@@ -41,9 +41,10 @@ void heapify (priority_queue *pq, int n)
 	}
 }
 
-void pq_init (priority_queue *pq)
+void pq_init (priority_queue *pq, size_t max_size)
 {
 	pq->size = 0;
+	pq->nodes = malloc(max_size*sizeof(NODE_TYPE*));
 }
 
 void pq_insert (priority_queue *pq, NODE_TYPE *node)
@@ -74,6 +75,12 @@ NODE_TYPE* pq_remove (priority_queue *pq)
 	heapify(pq, 0);
 
 	return r;
+}
+
+void pq_destroy (priority_queue *pq)
+{
+	pq->size = 0;
+	free(pq->nodes);
 }
 
 int pq_is_empty (priority_queue *pq)

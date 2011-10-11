@@ -5,7 +5,7 @@ int main (int argc, char* argv[]){
     FILE *fp;
     wavheader *wh = malloc(sizeof(wavheader));
     
-    if((fp = fopen("test3.wav", "rb"))==NULL) {
+    if((fp = fopen(argv[1], "rb"))==NULL) {
         printf("ERROR: fopen\n");
         return 1;
     }

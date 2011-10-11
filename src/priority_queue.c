@@ -1,4 +1,4 @@
-#include <assert.h>
+#include <stdlib.h>
 #include <priority_queue.h>
 
 #define parent(i) ((i-1)/2)
@@ -64,7 +64,8 @@ NODE_TYPE* pq_remove (priority_queue *pq)
 {
 	NODE_TYPE *r;
 
-	assert(pq->size > 0);
+	if(pq->size <= 0)
+		return NULL;
 
 	r = pq->nodes[0];
 

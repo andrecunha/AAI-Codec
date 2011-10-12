@@ -17,4 +17,6 @@ bit_test: bit_test.c bitio.c
 wav_test: wav_test.c wavreader.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o wav_test wav_test.c wavreader.c
 
+hf_test: hf_test.c bitio.c priority_queue.c huffman.c
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o hf_test hf_test.c bitio.c priority_queue.c huffman.c
 

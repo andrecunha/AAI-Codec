@@ -19,4 +19,6 @@ wav_test: wav_test.c wavreader.c
 encoder: encoder.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o encode encoder.c
 
+hf_test: hf_test.c bitio.c priority_queue.c huffman.c
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o hf_test hf_test.c bitio.c priority_queue.c huffman.c
 

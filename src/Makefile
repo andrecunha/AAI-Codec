@@ -2,7 +2,7 @@ CC = gcc
 INCLUDE = ../include/
 CFLAGS = -ansi -Wall -g
 
-all: wav_test
+all: encoder
 
 
 clean:
@@ -16,5 +16,7 @@ bit_test: bit_test.c bitio.c
 
 wav_test: wav_test.c wavreader.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o wav_test wav_test.c wavreader.c
+encoder: encoder.c
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o encode encoder.c
 
 

@@ -1,5 +1,5 @@
 #include <bitio.h>
-#include <stdio.h>
+#include <stdlib.h>
 
 int main (int argc, char* argv[])
 {
@@ -18,7 +18,7 @@ int main (int argc, char* argv[])
     }
 
 	bprint(b);
-	byte d;
+	uint8_t d;
     i=0;
 	while(!bempty(b)){
 		bread(b,&d);

@@ -49,7 +49,7 @@ void hf_build_tree (hf_tree_node **result, uint64_t *frequencies, unsigned long 
 		/* The new node has children, so it is not a leaf node. */
 		new_node->is_leaf = 0;
 
-		new_node->value = 0;
+		new_node->value = 0; /* Avoiding "uninitialized value" error in hf_print_tree. */
 
 		/* Finally, we insert the new node back in the queue. */
 		pq_insert(queue, new_node);
@@ -184,3 +184,4 @@ void hf_destroy_tree (hf_tree_node *root)
 	}
 	free(root);
 }
+

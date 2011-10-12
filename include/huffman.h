@@ -5,9 +5,6 @@
  *  \brief The main file for Huffman encoding/decoding.
  */
 
-/* uint32_t -> dados;
- * uint64_t -> frequências. */
-
 #include <stdint.h>
 #include <bitio.h>
 
@@ -81,8 +78,21 @@ void hf_encode (uint32_t *input, bitbuffer *output, unsigned long input_length, 
  */
 void hf_decode (bitbuffer *input, uint64_t *frequencies, uint32_t *output, unsigned long frequency_length);
 
+/*! \fn void hf_print_tree (hf_tree_node *tree, unsigned long level)
+ *  \brief Prints a Huffman tree. Useful for debugging.
+ *
+ *  \param tree The tree to print out.
+ *  \param level Used internally. Call with 0.
+ *
+ */
 void hf_print_tree (hf_tree_node *tree, unsigned long level);
 
+/*! \fn void hf_destroy_tree (hf_tree_node *root)
+ *  \brief Deallocates a Huffman tree.
+ *
+ *  \param root The tree to destroy.
+ *
+ */
 void hf_destroy_tree (hf_tree_node *root);
 
 #endif /* HUFFMAN_H */

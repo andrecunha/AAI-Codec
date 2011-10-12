@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 	hf_traverse(root, codes, 3);
 
 	printf("codes[0] = [%x %x %x]\n", codes[0][0], codes[0][1], codes[0][2]);
-	printf("codes[1] = [%x %x %x]\n", codes[1][0], codes[1][1], codes[1][2]);
+	printf("codes[1] = [%x %x]\n", codes[1][0], codes[1][1]);
 	printf("codes[2] = [%x %x %x]\n", codes[2][0], codes[2][1], codes[2][2]);
 
 	bitbuffer *buffer = malloc(sizeof(bitbuffer));
@@ -57,6 +57,11 @@ int main(int argc, char* argv[])
 	printf("\n");
 
 	bdestroy(buffer);
+	for(i=0; i<3; i++)
+		free(codes[i]);
+	free(codes);
+	free(buffer);
 
+	hf_destroy_tree(root);
 	return 0;
 }

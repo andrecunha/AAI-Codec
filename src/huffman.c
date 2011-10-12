@@ -9,7 +9,6 @@ int pq_get_priority(NODE_TYPE *node)
 	return node->frequency;
 }
 
-/* TEST STATUS : OK */
 void hf_compute_frequencies (uint32_t *input, unsigned long *output, uint32_t input_length)
 {
 	int i;
@@ -50,6 +49,8 @@ void hf_build_tree (hf_tree_node **result, uint64_t *frequencies, unsigned long 
 		/* The new node has children, so it is not a leaf node. */
 		new_node->is_leaf = 0;
 
+		new_node->value = 0;
+
 		/* Finally, we insert the new node back in the queue. */
 		pq_insert(queue, new_node);
 	}
@@ -57,6 +58,7 @@ void hf_build_tree (hf_tree_node **result, uint64_t *frequencies, unsigned long 
 	/* When there is only one node in the queue, so that node contains the whole Huffman tree, and it is returned. */
 	*result = pq_remove(queue);
 	pq_destroy(queue);
+	free(queue);
 }
 
 
@@ -97,18 +99,17 @@ void hf_traverse (hf_tree_node *root, uint8_t* output[], unsigned long length)
 void hf_encode (uint32_t *input, bitbuffer *output, unsigned long input_length, unsigned long frequency_length)
 {
 	/* To encode the input vector, we first calculate the frequencies of the symbols in it.*/
-	/*uint64_t *frequencies = calloc(length, sizeof(uint64_t));*/
 	uint64_t *frequencies = calloc(frequency_length, sizeof(uint64_t));
 
 	hf_compute_frequencies(input, frequencies, input_length);
-	
-
 
 	/* Then, we build the Huffman tree. */
 	hf_tree_node *root;
 	/*hf_build_tree(&root, frequencies, length);*/
 	
 	hf_build_tree(&root, frequencies, frequency_length);
+
+	free(frequencies);
 
 	/* Then, we traverse the tree to obtain the code for each symbol. */
 	uint8_t **codes = malloc(frequency_length*sizeof(uint8_t*));
@@ -124,6 +125,11 @@ void hf_encode (uint32_t *input, bitbuffer *output, unsigned long input_length, 
 		for(j=0; j<code_length; j++)
 			bwrite(output, codes[input[i]][j]);
 	}
+
+	for(i=0; i<frequency_length; i++)
+		free(codes[i]);
+	free(codes);
+	hf_destroy_tree(root);
 }
 
 void hf_decode (bitbuffer *input, uint64_t *frequencies, uint32_t *output, unsigned long frequency_length)
@@ -152,6 +158,8 @@ void hf_decode (bitbuffer *input, uint64_t *frequencies, uint32_t *output, unsig
 			curr_node = root;
 		}
 	}
+	free(b);
+	hf_destroy_tree(root);
 }
 
 void hf_print_tree (hf_tree_node *tree, unsigned long level)
@@ -166,4 +174,13 @@ void hf_print_tree (hf_tree_node *tree, unsigned long level)
 	printf ("At level %lu. Value = %u; Frequency = %u.\n", level, tree->value,tree->frequency);
 	hf_print_tree(tree->left, level+1);
 	hf_print_tree(tree->right, level+1);
+}
+
+void hf_destroy_tree (hf_tree_node *root)
+{
+	if(!root->is_leaf){
+		hf_destroy_tree(root->left);
+		hf_destroy_tree(root->right);
+	}
+	free(root);
 }

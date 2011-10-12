@@ -83,4 +83,6 @@ void hf_decode (bitbuffer *input, uint64_t *frequencies, uint32_t *output, unsig
 
 void hf_print_tree (hf_tree_node *tree, unsigned long level);
 
+void hf_destroy_tree (hf_tree_node *root);
+
 #endif /* HUFFMAN_H */

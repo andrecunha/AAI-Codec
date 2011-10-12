@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include <bitio.h>
 
-int binit(bitbuffer *b, size_t size)
+int binit(bitbuffer *b, uint32_t size)
 {
 	b->data = b->original_data = malloc(size);
 
@@ -116,7 +117,7 @@ int breadv(bitbuffer *b, uint32_t *output, unsigned int count)
 
 int bflush(bitbuffer *b, FILE *f)
 {	
-	if(fwrite(&b->size, sizeof(size_t), 1, f)!=1) return 1;	
+	if(fwrite(&b->size, sizeof(uint32_t), 1, f)!=1) return 1;
 	if(fwrite(&b->bits_last, sizeof(unsigned int), 1, f)!=1) return 1;
 
 	if (fwrite(b->original_data, sizeof(uint8_t), b->size, f) != b->size)
@@ -127,7 +128,7 @@ int bflush(bitbuffer *b, FILE *f)
 
 int bget(bitbuffer *b, FILE *f)
 {	
-	if(fread(&b->size, sizeof(size_t), 1, f)!=1) return 1;	
+	if(fread(&b->size, sizeof(uint32_t), 1, f)!=1) return 1;	
 	if(fread(&b->bits_last, sizeof(unsigned int), 1, f)!=1) return 1;
     b->n_bytes = b->size;
     b->bits_offset = 0;
@@ -144,7 +145,7 @@ int bget(bitbuffer *b, FILE *f)
 
 void bprint(bitbuffer *b)
 {
-	printf("bprint: size = %u\n", b->size);
+	printf("bprint: size = %"PRIu32"\n", b->size);
 	printf("bprint: n_bytes = %lu\n", b->n_bytes);
 	printf("bprint: bits_last = %u\n", b->bits_last);
 	printf("bprint: bits_offset = %u\n", b->bits_offset);

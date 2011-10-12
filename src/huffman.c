@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <huffman.h>
@@ -16,14 +17,14 @@ void hf_compute_frequencies (uint32_t *input, uint64_t *output, uint32_t input_l
 		output[input[i]]++;
 }
 
-void hf_build_tree (hf_tree_node **result, uint64_t *frequencies, unsigned long length)
+void hf_build_tree (hf_tree_node **result, uint64_t *frequencies, uint32_t frequency_length)
 {
 	priority_queue *queue = malloc(sizeof(priority_queue));
-	pq_init(queue, length);
+	pq_init(queue, frequency_length);
 
 	/* Firstly, we put all the elements in the queue, along with their respective frequency. */
 	int i;
-	for(i=0; i<length; i++) {
+	for(i=0; i<frequency_length; i++) {
 		hf_tree_node *node = malloc(sizeof(hf_tree_node));
 		node->frequency = frequencies[i];
 		node->left = node->right = NULL;
@@ -88,7 +89,7 @@ void recursive_traverse (hf_tree_node *root, unsigned long level, uint8_t* curr_
 	}
 }
 
-void hf_traverse (hf_tree_node *root, uint8_t* output[], unsigned long length)
+void hf_traverse (hf_tree_node *root, uint8_t* output[], uint32_t length)
 {
 	uint8_t *code = malloc(length);
 	recursive_traverse(root, 0, code, output);
@@ -96,7 +97,7 @@ void hf_traverse (hf_tree_node *root, uint8_t* output[], unsigned long length)
 }
 
 
-void hf_encode (uint32_t *input, bitbuffer *output, unsigned long input_length, unsigned long frequency_length)
+void hf_encode (uint32_t *input, bitbuffer *output, uint32_t input_length, uint32_t frequency_length)
 {
 	/* To encode the input vector, we first calculate the frequencies of the symbols in it.*/
 	uint64_t *frequencies = calloc(frequency_length, sizeof(uint64_t));
@@ -132,7 +133,7 @@ void hf_encode (uint32_t *input, bitbuffer *output, unsigned long input_length, 
 	hf_destroy_tree(root);
 }
 
-void hf_decode (bitbuffer *input, uint64_t *frequencies, uint32_t *output, unsigned long frequency_length)
+void hf_decode (bitbuffer *input, uint64_t *frequencies, uint32_t *output, uint32_t frequency_length)
 {
 	/* To decode the input vector, we need to build the Huffman tree that was used to generate it. */
 	hf_tree_node *root, *curr_node;
@@ -171,7 +172,7 @@ void hf_print_tree (hf_tree_node *tree, unsigned long level)
 	for(i=0; i<level; i++)
 		printf("| ");
 
-	printf ("At level %lu. Value = %u; Frequency = %u.\n", level, tree->value,tree->frequency);
+	printf ("At level %lu. Value = %"PRIu32"; Frequency = %"PRIu64".\n", level, tree->value,tree->frequency);
 	hf_print_tree(tree->left, level+1);
 	hf_print_tree(tree->right, level+1);
 }

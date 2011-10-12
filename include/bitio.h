@@ -12,7 +12,7 @@
  *  \brief A struct that stores a FIFO bit buffer.
  */
 struct _bitbuffer {
-	size_t size; /*!< The number of uint8_ts allocated for "data". */
+	uint32_t size; /*!< The number of uint8_ts allocated for "data". */
 	unsigned long n_bytes; /*!< The effective number of uint8_ts stored in the buffer (including the possibly incomplete first and last uint8_ts). */	
     unsigned int bits_last; /*!< The number of bits effectively used in the last uint8_t. */
 	unsigned int bits_offset; /*!< The number of bits to be skipped in the first uint8_t. */
@@ -24,14 +24,14 @@ struct _bitbuffer {
  */
 typedef struct _bitbuffer bitbuffer;
 
-/*! \fn int binit(bitbuffer *b, unsigned long size)
+/*! \fn int binit(bitbuffer *b, uint32_t size)
  *  \brief Initializes a bit buffer.
  *  
  *  \param b The bit buffer.
  *  \param size The maximum size of the buffer (the ammount of memory to be allocated).
  *  \return 0 if the buffer could be allocated; 1 otherwise.
  */
-int binit(bitbuffer *b, size_t size);
+int binit(bitbuffer *b, uint32_t size);
 
 /*! \fn int bwrite(bitbuffer *b, uint8_t data)
  *  \brief Write a bit at the end of the bit buffer.

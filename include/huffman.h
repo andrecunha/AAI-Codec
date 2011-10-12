@@ -34,16 +34,16 @@ typedef struct _hf_tree_node hf_tree_node;
  */
 void hf_compute_frequencies (uint32_t *input, uint64_t *output, uint32_t input_length);
 
-/*! \fn void hf_build_tree (hf_tree_node *root, uint64_t *frequencies, unsigned long length)
+/*! \fn void hf_build_tree (hf_tree_node **result, uint64_t *frequencies, uint32_t frequency_length);
  *  \brief Builds the Huffman tree corresponding to the given frequencies.
  *
  *  \param result The root node of the built tree.
  *  \param frequencies A vector containing the frequencies of each symbol.
- *  \param length The number of elements in "frequencies".
+ *  \param frequency_length The number of elements in "frequencies".
  */
-void hf_build_tree (hf_tree_node **result, uint64_t *frequencies, unsigned long length);
+void hf_build_tree (hf_tree_node **result, uint64_t *frequencies, uint32_t frequency_length);
 
-/*! \fn uint8_t* hf_traverse (hf_tree_node *root, uint8_t* output[])
+/*! \fn void hf_traverse (hf_tree_node *root, uint8_t* output[], uint32_t length)
  *  \brief Traverses a Huffman tree, and returns the code corresponding to all the symbols.
  *
  *  \param root The root node of the tree.
@@ -51,9 +51,9 @@ void hf_build_tree (hf_tree_node **result, uint64_t *frequencies, unsigned long 
  *  \param length The maximum length of the a code (can be the length of the frequency vector).
  *
  */
-void hf_traverse (hf_tree_node *root, uint8_t* output[], unsigned long length);
+void hf_traverse (hf_tree_node *root, uint8_t* output[], uint32_t length);
 
-/*! \fn void hf_encode (uint32_t *input, bitbuffer *output, unsigned long input_length, unsigned long frequency_length)
+/*! \fn void hf_encode (uint32_t *input, bitbuffer *output, uint32_t input_length, uint32_t frequency_length)
  *  \brief Encodes the input vector, storing the result in the output bit buffer.
  *
  *  \param input The input vector.
@@ -64,9 +64,9 @@ void hf_traverse (hf_tree_node *root, uint8_t* output[], unsigned long length);
  *  \return The Huffman tree generated during the encoding process.
  */
 
-void hf_encode (uint32_t *input, bitbuffer *output, unsigned long input_length, unsigned long frequency_length);
+void hf_encode (uint32_t *input, bitbuffer *output, uint32_t input_length, uint32_t frequency_length);
 
-/*! \fn void hf_decode (bitbuffer *input, uint64_t frequencies, uint32_t *output, unsigned long length);
+/*! \fn void hf_decode (bitbuffer *input, uint64_t frequencies, uint32_t *output, uint32_t length);
  *  \brief Decodes the bit sequence stored in the input bit buffer, and stores the result in the output vector.
  *
  *  \param input The input bit sequence.
@@ -76,7 +76,7 @@ void hf_encode (uint32_t *input, bitbuffer *output, unsigned long input_length, 
  *
  *  \warning "output" is assumed to be large enough to store all the uncompressed data.
  */
-void hf_decode (bitbuffer *input, uint64_t *frequencies, uint32_t *output, unsigned long frequency_length);
+void hf_decode (bitbuffer *input, uint64_t *frequencies, uint32_t *output, uint32_t frequency_length);
 
 /*! \fn void hf_print_tree (hf_tree_node *tree, unsigned long level)
  *  \brief Prints a Huffman tree. Useful for debugging.

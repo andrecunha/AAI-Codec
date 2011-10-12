@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <huffman.h>
 
 int main(int argc, char* argv[])
@@ -15,7 +16,7 @@ int main(int argc, char* argv[])
 	printf("Frequencies: ");
 	int i;
 	for(i=0; i<3; i++)
-		printf("%u ", frequencies[i]);
+		printf("%"PRIu64" ", frequencies[i]);
 	printf("\n");
 
 	hf_tree_node *root;
@@ -53,7 +54,7 @@ int main(int argc, char* argv[])
 
 	printf("Decoded: ");
 	for(i=0; i<12; i++)
-		printf("%d ", output[i]);
+		printf("%"PRIu32" ", output[i]);
 	printf("\n");
 
 	bdestroy(buffer);

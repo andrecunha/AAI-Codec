@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 #include <bitio.h>
 
@@ -16,7 +17,7 @@ int binit(bitbuffer *b, size_t size)
 	return 1;
 }
 
-int bwrite(bitbuffer *b, byte data)
+int bwrite(bitbuffer *b, uint8_t data)
 {
     int difference;
 
@@ -28,7 +29,7 @@ int bwrite(bitbuffer *b, byte data)
         b->n_bytes++;
         b->bits_last=0;
         b->bits_offset=0;
-        memset(b->original_data+b->size-1, 0, sizeof(byte));
+        memset(b->original_data+b->size-1, 0, sizeof(uint8_t));
     }
 
 	/* If the last byte is fully occupied, try to store the bit on the next byte. */
@@ -51,7 +52,7 @@ int bwrite(bitbuffer *b, byte data)
 	return 0;
 }
 
-int bread(bitbuffer *b, byte *out)
+int bread(bitbuffer *b, uint8_t *out)
 {
 	if(bempty(b)){
 		return 1;
@@ -81,12 +82,44 @@ int bread(bitbuffer *b, byte *out)
 	return 0;
 }
 
+void bwritev(bitbuffer *b, uint32_t data, unsigned int count)
+{
+	if (count<1 || count>32)
+		return;
+
+	int i;
+	for(i=0; i<count; i++){
+		bwrite(b, (uint8_t)((data >> (count-i-1)) & 1));
+	}
+}
+
+int breadv(bitbuffer *b, uint32_t *output, unsigned int count)
+{
+	if(count<1 || count>32)
+		return 0;
+
+	*output = 0;
+	uint8_t aux8;
+	uint32_t aux32;
+	int i;
+	for(i=0; i<count; i++){
+		if (bread(b, &aux8))
+			return i;
+		aux32 = 0; /*XXX: Pode ser que seja inútil.*/
+		aux32 = aux8;
+		aux32 <<= (count-i-1);
+		*output = *output | aux32;
+	}
+
+	return count;
+}
+
 int bflush(bitbuffer *b, FILE *f)
 {	
 	if(fwrite(&b->size, sizeof(size_t), 1, f)!=1) return 1;	
 	if(fwrite(&b->bits_last, sizeof(unsigned int), 1, f)!=1) return 1;
 
-	if (fwrite(b->original_data, sizeof(byte), b->size, f) != b->size)
+	if (fwrite(b->original_data, sizeof(uint8_t), b->size, f) != b->size)
 		return 1;
 
 	return 0;
@@ -103,7 +136,7 @@ int bget(bitbuffer *b, FILE *f)
 	if (b->data) memset(b->data, 0, b->size);
 	else return 1;	
 	
-	if (fread(b->data, sizeof(byte), b->size, f) != b->size)
+	if (fread(b->data, sizeof(uint8_t), b->size, f) != b->size)
 		return 1;
 
 	return 0;

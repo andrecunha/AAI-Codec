@@ -6,22 +6,17 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-
-/*! \var typedef unsigned char byte
- *  \brief A type definition to represent a byte.
- */
-typedef unsigned char byte;
+#include <stdint.h>
 
 /*! \struct _bitbuffer
  *  \brief A struct that stores a FIFO bit buffer.
  */
 struct _bitbuffer {
-	size_t size; /*!< The number of bytes allocated for "data". */
-	unsigned long n_bytes; /*!< The effective number of bytes stored in the buffer (including the possibly incomplete first and last bytes). */	
-    unsigned int bits_last; /*!< The number of bits effectively used in the last byte. */
-	unsigned int bits_offset; /*!< The number of bits to be skipped in the first byte. */
-	byte *data, *original_data; /*!< The data itself. */
+	size_t size; /*!< The number of uint8_ts allocated for "data". */
+	unsigned long n_bytes; /*!< The effective number of uint8_ts stored in the buffer (including the possibly incomplete first and last uint8_ts). */	
+    unsigned int bits_last; /*!< The number of bits effectively used in the last uint8_t. */
+	unsigned int bits_offset; /*!< The number of bits to be skipped in the first uint8_t. */
+	uint8_t *data, *original_data; /*!< The data itself. */
 };
 
 /*! \var typedef struct _bitbuffer bitbuffer
@@ -38,7 +33,7 @@ typedef struct _bitbuffer bitbuffer;
  */
 int binit(bitbuffer *b, size_t size);
 
-/*! \fn int bwrite(bitbuffer *b, byte data)
+/*! \fn int bwrite(bitbuffer *b, uint8_t data)
  *  \brief Write a bit at the end of the bit buffer.
  *
  *  \param b The bit buffer where the bit is to be stored.
@@ -48,9 +43,9 @@ int binit(bitbuffer *b, size_t size);
  *
  *  \return 0 on success; 1 otherwise.
  */
-int bwrite(bitbuffer *b, byte data);
+int bwrite(bitbuffer *b, uint8_t data);
 
-/*! \fn int bread(bitbuffer *b, byte *out)
+/*! \fn int bread(bitbuffer *b, uint8_t *out)
  *  \brief Reads a bit from the beginning of the bit buffer.
  *
  *  \param b The bit buffer to be read.
@@ -58,7 +53,30 @@ int bwrite(bitbuffer *b, byte data);
  *
  *  \return 0 on success; 1 otherwise.
  */
-int bread(bitbuffer *b, byte *out);
+int bread(bitbuffer *b, uint8_t *out);
+
+/*! 
+ * \fn void bwritev(bitbuffer b, uint32_t data, unsigned int count)
+ * \breaf Writes a vector to the bit buffer.
+ *
+ * \param b The bit buffer where the data will be stored.
+ * \param data The data to be stored.
+ * \param count The number of bits from data that should be stored.
+ *
+ */
+void bwritev(bitbuffer *b, uint32_t data, unsigned int count);
+
+/*! 
+ * \fn int breadv(bitbuffer b, uint32_t *output, unsigned int count)
+ * \breaf Reads a vector from the bit buffer.
+ *
+ * \param b The bit buffer from which the data will be read.
+ * \param output Where the data will be stored.
+ * \param count The number of bits from the bit buffer that will be read and stored in "output".
+ *
+ * \return The number of bits that was read.
+ */
+ int breadv(bitbuffer *b, uint32_t *output, unsigned int count);
 
 /*! \fn int bflush(bitbuffer *b, FILE *f)
  *  \brief Flushes the buffer to a file.

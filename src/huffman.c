@@ -9,7 +9,7 @@ int pq_get_priority(NODE_TYPE *node)
 	return node->frequency;
 }
 
-void hf_compute_frequencies (uint32_t *input, unsigned long *output, uint32_t input_length)
+void hf_compute_frequencies (uint32_t *input, uint64_t *output, uint32_t input_length)
 {
 	int i;
 	for(i=0; i<input_length; i++)

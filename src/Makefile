@@ -2,7 +2,7 @@ CC = gcc
 INCLUDE = ../include/
 CFLAGS = -ansi -Wall -g -lm
 
-all: bit_test
+all: run_length_test
 
 
 clean:

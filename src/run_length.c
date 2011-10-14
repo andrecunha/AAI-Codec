@@ -1,19 +1,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <math.h>
 #include <bitio.h>
 #include <run_length.h>
 
-void rl_encode(bitbuffer *input, bitbuffer *output){
+void rl_encode(bitbuffer *input, bitbuffer *output, 
+        uint16_t bits_per_sample, uint32_t *nbits_run, uint32_t *nbits_code){
     uint32_t *to_encode, size_to_encode;
-    uint8_t i = 0;
+    uint8_t i = 0, code;
+    bitbuffer *smaller, *curr;
+    
+    smaller = malloc(sizeof(bitbuffer));
+    curr = malloc(sizeof(bitbuffer));
+    binit(smaller, 1);
+    binit(curr, 1);
 
-    /* TODO
-     * for(i=0 i<bitsPerSample; i++)
-     */
-    /*size_to_encode = b_to_uint32(input, &to_encode, i);
-    rl_encode_nbits(i, to_encode, output, size_to_encode);*/
+    for(i=1; i<=bits_per_sample; i++){
+        breload(input);
+        breload(smaller);
+        breload(curr);
+        size_to_encode = b_to_uint32(input, &to_encode, i);
+        code = rl_encode_nbits(i, to_encode, curr, size_to_encode);
+        if((i==0) || (((curr->n_bytes*8-(8-curr->bits_last))<
+                (smaller->n_bytes*8-(8-smaller->bits_last))))){
+            bit_buffer_cpy(smaller, curr);
+            *nbits_run = i;
+            *nbits_code = code;
+        }
+    }
+    bit_buffer_cpy(output, smaller);
+    bdestroy(smaller);
+    bdestroy(curr);
+    free(smaller);
+    free(curr);
 }
 
 uint32_t rl_encode_nbits(uint8_t nbits, uint32_t *input, 
@@ -35,9 +56,10 @@ uint32_t rl_encode_nbits(uint8_t nbits, uint32_t *input,
             count = 1;
         }
     }
+    if(input_length>1){
+        if(input[input_length-1]!=input[input_length-2]) count = 1;
+    }
 
-    if(input[input_length-1]!=input[input_length-2]) count = 1;
-    
     bwritev(output, input[input_length-1], nbits);
     bwritev(output, count, longest_run); 
 

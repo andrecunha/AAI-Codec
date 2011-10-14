@@ -11,7 +11,7 @@
  *  \param input The input bifbuffer.
  *  \param output The output bitbuffer.
  */
-void rl_encode(bitbuffer *input, bitbuffer *output);
+void rl_encode(bitbuffer *input, bitbuffer *output, uint16_t bits_per_sample, uint32_t *nbits_run, uint32_t *nbits_code);
 
 /*! \fn uint32_t rl_encode_nbits(uint8_t nbits, uint32_t *input, bitbuffer *output, uint32_t input_length);
  *  \brief Encodes a uint32_t vector with an specific size of code.

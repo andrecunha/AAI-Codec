@@ -127,6 +127,23 @@ int bflush(bitbuffer *b, FILE *f)
 	return 0;
 }
 
+void bit_buffer_cpy(bitbuffer *output, bitbuffer *input){
+    uint8_t buf = 0;
+
+    bdestroy(output);
+    binit(output, 1);
+
+    while(!bempty(input)){
+        bread(input, &buf);
+        bwrite(output, buf);
+    }
+    
+}
+
+void breload(bitbuffer *b){
+    b->data = b->original_data;
+    b->bits_offset = 0; 
+}
 
 uint32_t b_to_uint32(bitbuffer *b, uint32_t **output, uint8_t nbits){
     uint32_t tam = ceil((float)((b->n_bytes*8) - (8 - b->bits_last))/nbits), i;

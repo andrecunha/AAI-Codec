@@ -3,21 +3,37 @@
 #include <run_length.h>
 
 int main(int argc, char* argv[]){ 
-    uint32_t v[10] = {0, 0, 0, 0, 0, 1, 0, 1, 1, 1}, nbits_run;
     bitbuffer *b = malloc(sizeof(bitbuffer));
     bitbuffer *bout = malloc(sizeof(bitbuffer));
+    bitbuffer *bout2 = malloc(sizeof(bitbuffer));
+    uint32_t bits_run = 0;
+    uint32_t  bits_code = 0;
 
     binit(b, 1);
     binit(bout, 1);
+    binit(bout2, 1);
+ 
+	int i;
+	for(i=0; i<33; i++){
+		if(i<8)
+			bwrite(b, 0);
+		else
+			bwrite(b, 1);
+    }
 
-    nbits_run = rl_encode_nbits(1, v, b, 10);
+    rl_encode(b, bout, 16, &bits_run, &bits_code);
+
     bprint(b);
-
-    rl_decode(16, 1, nbits_run, b, bout);
     bprint(bout);
+
+    rl_decode(16, bits_code, bits_run, bout, bout2);
+    bprint(bout2);
+    
     
     bdestroy(b);
     bdestroy(bout);
+    bdestroy(bout2);
+    free(bout);
     free(bout);
     free(b);
     return 0;

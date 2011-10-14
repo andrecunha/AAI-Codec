@@ -90,6 +90,10 @@ void bwritev(bitbuffer *b, uint32_t data, unsigned int count);
  */
 int bflush(bitbuffer *b, FILE *f);
 
+void bit_buffer_cpy(bitbuffer *output, bitbuffer *input);
+
+void breload(bitbuffer *b);
+
 /* Retorna o tamanho do vetor. Coloca o vetor em output. */
 uint32_t b_to_uint32(bitbuffer *b, uint32_t **output, uint8_t nbits);
 

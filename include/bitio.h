@@ -91,10 +91,10 @@ void bwritev(bitbuffer *b, uint32_t data, unsigned int count);
 int bflush(bitbuffer *b, FILE *f);
 
 /* Retorna o tamanho do vetor. Coloca o vetor em output. */
-uint32_t b_to_uint32(bitbuffer *b, uint32_t **output);
+uint32_t b_to_uint32(bitbuffer *b, uint32_t **output, uint8_t nbits);
 
 /* input_length é o tamanho do vetor de entrada. nbits é quantos bits de cada elemento do vetor de entrada serão colocados no buffer. */
-void b_from_uint32(bitbuffer *b, uint32_t *input, uint32_t input_length, uint8_t nbits);
+void b_from_uint32(bitbuffer *b, uint32_t *input, uint32_t input_length, uint8_t nbits, unsigned int b_last);
 
 /*! \fn int bget(bitbuffer *b, FILE *f)
  *

@@ -21,7 +21,7 @@ uint32_t rl_encode_nbits(uint8_t nbits, uint32_t *input,
     uint32_t i, count, longest_run;
 
     longest_run = find_longest_run(input, input_length);
-    longest_run = ceil(log(longest_run)/log(2));
+    longest_run = ceil((float)log(longest_run)/log(2));
     if(longest_run == 0) longest_run = 1;
 
     for(i=0; i<input_length; i++){   

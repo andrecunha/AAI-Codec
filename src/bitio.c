@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <math.h>
 #include <bitio.h>
 
 int binit(bitbuffer *b, uint32_t size)
@@ -124,6 +125,32 @@ int bflush(bitbuffer *b, FILE *f)
 		return 1;
 
 	return 0;
+}
+
+
+uint32_t b_to_uint32(bitbuffer *b, uint32_t **output, uint8_t nbits){
+    uint32_t tam = ceil((float)((b->n_bytes*8) - (8 - b->bits_last))/nbits), i;
+    
+    *output = malloc(tam*sizeof(uint32_t));
+    
+    for (i=0; i<tam; i++){
+        (*output)[i] = 0;
+    }
+
+    for (i=0; i<tam; i++){
+        breadv(b, (*output)+i, nbits);
+    }
+    return tam; 
+}
+
+void b_from_uint32(bitbuffer *b, uint32_t *input, 
+        uint32_t input_length, uint8_t nbits,  unsigned int b_last){
+    uint32_t i;
+
+    for(i=0; i<input_length; i++){  
+       bwritev(b, input[i], nbits);
+    }
+    b->bits_last = b_last;
 }
 
 int bget(bitbuffer *b, FILE *f)

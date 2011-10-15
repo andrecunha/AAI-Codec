@@ -53,7 +53,7 @@ void enc_huffman(int previous, FILE *in_fp)
                 for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
                         binit(data_buffer[curr_channel], input_file_header->subchunk2size);
                         /* We encode each channel in a separate bit buffer. */
-                        hf_encode(data_vector[i], &frequencies, input_file_header->subchunk2size, pow(2,input_file_header->bitsPerSample));
+                        hf_encode(data_vector[curr_channel], data_buffer[curr_channel], &frequencies, input_file_header->subchunk2size, pow(2,input_file_header->bitsPerSample));
                 }
         }
 }

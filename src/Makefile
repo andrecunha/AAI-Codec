@@ -50,6 +50,6 @@ run_length: run_length.c
 huffman: huffman.c bitio priority_queue
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o huffman.o -c huffman.c
 
-encode: encoder.c huffman run_length delta bitio
-	$(CC) $(CFLAGS) -I$(INCLUDE) -o encode encoder.c huffman.o run_length.o delta.o bitio.o
+encode: encoder.c huffman run_length delta bitio wavreader
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o encode encoder.c huffman.o run_length.o delta.o bitio.o priority_queue.o wavreader.o
 

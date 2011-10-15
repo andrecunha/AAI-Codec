@@ -131,7 +131,7 @@ int getHeader(wavheader *wh, FILE *f){
 
 int read_byte(FILE *fp, uint8_t *c){
     if(fread(c, 1, 1 ,fp)!=1){
-        /*printf("ERROR: IO\n");*/
+        printf("ERROR: IO\n");
         return 1;
     }
     return 0;

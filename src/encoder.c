@@ -2,34 +2,80 @@
 #include <stdio.h>
 #include <string.h>
 #include <getopt.h>
+#include <math.h>
+#include <bitio.h>
 #include <wavreader.h>
 #include <error_handler.h>
+#include <huffman.h>
+#include <delta.h>
+#include <run_length.h>
 
 #define HUFFMAN 1
 #define DELTA 2
 #define RUN_LENGTH 3
 
-#define boolean int
+typedef int boolean;
 #define TRUE 1
 #define FALSE 0
 
-void huffman(){
-    printf("Huffman encoding...\n");
+/* Global variables, a necessary evil. */
+
+/* The data divided in channels. */
+
+uint32_t **data_vector; 
+bitbuffer **data_buffer;
+wavheader *input_file_header;
+uint64_t *frequencies;
+
+void enc_prepare_input_file(FILE *fp)
+{
+        input_file_header = malloc(sizeof(wavheader));
+        getHeader(input_file_header, fp);
 }
 
-void run_length(){
+void enc_multiplex ()
+{
+
+}
+
+void enc_huffman(int previous, FILE *in_fp)
+{
+        if (previous == -1) {
+                /* Huffman is the first encoding option. */
+                printf("Applying Huffman encoding ...\n");
+
+                load_to_uint32(in_fp, input_file_header, &data_vector);
+
+                data_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer*));
+                frequencies = calloc(pow(2,input_file_header->bitsPerSample), sizeof(uint64_t));
+
+                int curr_channel=0;
+                for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+                        binit(data_buffer[curr_channel], input_file_header->subchunk2size);
+                        /* We encode each channel in a separate bit buffer. */
+                        hf_encode(data_vector[i], &frequencies, input_file_header->subchunk2size, pow(2,input_file_header->bitsPerSample));
+                }
+        }
+}
+
+void enc_run_length()
+{
     printf("Run-length encoding...\n");
 }
 
-void delta(){
+void enc_delta()
+{
     printf("Difference encoding...\n");
 }
 
-int main (int argc, char* argv[]){
-    unsigned int n_encodings = 0, first_enc = 0, 
-                    sec_enc = 0, third_enc = 0;
+int main (int argc, char* argv[])
+{
+    unsigned int n_encodings = 0,
+                 first_enc = 0, 
+                 sec_enc = 0,
+                 third_enc = 0;
     boolean optimize = FALSE;
-    FILE *fp_in, *fp_out;
+    FILE *in_fp, *out_fp;
     int get_opt;
 
     while((get_opt = getopt(argc, argv, "cdho"))!= -1){
@@ -74,36 +120,52 @@ int main (int argc, char* argv[]){
         FORMAT_ERROR; return 1;
     }
 
-    printf("Input file: %s\nOutput file = %s\n", argv[optind], argv[optind+1]);
+    printf("AAI-Codec version 0.0.0.0.1");
+    printf("Encoding file \"%s\" to \"%s\"...\n", argv[optind], argv[optind+1]);
         
     if(optimize == TRUE) printf("Optimization on.\n");
 
-    if((fp_in = fopen(argv[optind], "rb"))==NULL){
+    if((in_fp = fopen(argv[optind], "rb"))==NULL){
         IO_OPEN_ERROR;
         return 1;
     }
     
-    if((fp_out = fopen(argv[optind+1], "wb+"))==NULL){
+    if((out_fp = fopen(argv[optind+1], "wb+"))==NULL){
         IO_OPEN_ERROR;
-        fclose(fp_in);
+        fclose(in_fp);
         return 1;
     }
     
-    if(first_enc == HUFFMAN) huffman();
-    else if(first_enc == DELTA) delta();
-    else run_length();
+    printf("Starting encoding process..");
 
-    if(sec_enc == HUFFMAN) huffman();
-    else if(sec_enc == DELTA) delta();
-    else if(sec_enc == RUN_LENGTH) run_length();
+    enc_prepare_input_file(in_fp);
+
+    if(first_enc == HUFFMAN)
+            enc_huffman(-1, in_fp);
+    else if(first_enc == DELTA)
+            enc_delta(-1);
+        else 
+            enc_run_length(-1);
+
+    /*XXX: Acertar os índices.*/
+    if(sec_enc == HUFFMAN)
+            enc_huffman(0, in_fp);
+    else if(sec_enc == DELTA)
+            enc_delta();
+        else if(sec_enc == RUN_LENGTH) 
+                enc_run_length();
     
-    if(third_enc == HUFFMAN) huffman();
-    else if(third_enc == DELTA) delta();
-    else if(third_enc == RUN_LENGTH) run_length();
+    /*XXX: Acertar os índices.*/
+    if(third_enc == HUFFMAN)
+            enc_huffman(0, in_fp);
+    else if(third_enc == DELTA)
+            enc_delta();
+    else if(third_enc == RUN_LENGTH)
+            enc_run_length();
    
-    fclose(fp_in);
-    fclose(fp_out);
-
+    fclose(in_fp);
+    fclose(out_fp);
+    free(input_file_header);
     return 0;
 }
 

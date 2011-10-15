@@ -114,14 +114,19 @@ uint32_t find_longest_run(uint32_t *input, uint32_t input_length){
     return longest_run; 
 }
 
-void rl_decode(uint16_t bits_per_sample, uint32_t nbits_code, uint32_t nbits_run, 
-            bitbuffer *input, bitbuffer *output){
-    uint32_t code, run, i;
+void rl_decode(uint16_t bits_per_sample, uint32_t nbits_code, 
+        uint32_t nbits_run, bitbuffer *input, bitbuffer *output){
+         uint32_t size = input->n_bytes*8-(8-input->bits_last);
 
-    while(!bempty(input)){
+   uint32_t code, run, i, j;
+
+    for(j=0;j<size; j+=(nbits_run+nbits_code)){
+        code = 0;
+        run = 0;
         breadv(input, &code, nbits_code);
         breadv(input, &run, nbits_run);
-        for (i=0; i<run; i++)
-            bwritev(output, code, bits_per_sample/8);
+        for (i=0; i<run; i++){
+            bwritev(output, code, nbits_code);
+        }
     }
 }

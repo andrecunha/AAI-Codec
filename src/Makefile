@@ -21,7 +21,7 @@ encoder: encoder.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o encode encoder.c
 
 run_length_test: run_length_test.c run_length.c
-	$(CC) $(CFLAGS) -I$(INCLUDE) -o run_length_test run_length_test.c run_length.c bitio.c
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o run_length_test run_length_test.c run_length.c bitio.c wavreader.c
 
 hf_test: hf_test.c bitio.c priority_queue.c huffman.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o hf_test hf_test.c bitio.c priority_queue.c huffman.c

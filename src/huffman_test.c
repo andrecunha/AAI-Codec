@@ -21,6 +21,11 @@ int main (int argc, char* argv[])
         }
 
         printWavHeader(wh);
+
+        uint32_t **data;
+        load_to_uint32(fp,wh,&data);
+
         free(wh);
+        fclose(fp);
         return 0;
 }

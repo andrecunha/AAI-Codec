@@ -29,20 +29,20 @@ int main (int argc, char* argv[])
         bitbuffer b;
         binit(&b, wh->subchunk2size);
 
-        uint64_t *frequencies = calloc(pow(2,16), sizeof(uint64_t));
-        hf_compute_frequencies(data[0], frequencies, wh->subchunk2size);
-        hf_encode(data[0], &b, wh->subchunk2size, pow(2,16));
+        uint64_t *frequencies;
+        hf_encode(data[0], &b, &frequencies, wh->subchunk2size/2, pow(2,16));
 
         printf("n_bytes: %lu\n", b.n_bytes);
 
-        uint32_t *output = calloc(wh->subchunk2size,sizeof(uint32_t));
+        uint32_t *output = calloc(wh->subchunk2size/2,sizeof(uint32_t));
         hf_decode(&b, frequencies, output, pow(2,16));
 
         int i;
-        for(i=0; i<wh->subchunk2size; i++)
+        for(i=0; i<wh->subchunk2size/2; i++)
                 if(data[0][i] != output[i])
                         printf("Xiiiiiiiiiiiii....i\n");
 
+        free(output);
         bdestroy(&b);
         free(wh);
         fclose(fp);

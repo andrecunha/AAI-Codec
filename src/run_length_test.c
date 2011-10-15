@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
                 reads+=8;
            }
         }
-    }while((c!=EOF)&&(reads<wh->bitsPerSample*4));
+    }while((c!=EOF)&&(reads<wh->bitsPerSample*80));
 
 
     rl_encode(b, bout, wh->bitsPerSample, &bits_run, &bits_code);

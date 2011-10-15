@@ -9,8 +9,12 @@
 void rl_encode(bitbuffer *input, bitbuffer *output, 
         uint16_t bits_per_sample, uint32_t *nbits_run, uint32_t *nbits_code){
     uint32_t *to_encode, size_to_encode;
-    uint8_t i = 0, code;
+    uint32_t i = 0, run;
     bitbuffer *smaller, *curr;
+    uint32_t size = input->size;
+    unsigned long n_bytes = input->n_bytes;
+    unsigned int bits_last = input->bits_last;
+    unsigned int bits_offset = input->bits_offset;
     
     smaller = malloc(sizeof(bitbuffer));
     curr = malloc(sizeof(bitbuffer));
@@ -18,17 +22,39 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
     binit(curr, 1);
 
     for(i=1; i<=bits_per_sample; i++){
-        breload(input);
-        breload(smaller);
-        breload(curr);
+        /*Allocates memory to to_encode.*/
+        /*Decreases input pointers.*/
         size_to_encode = b_to_uint32(input, &to_encode, i);
-        code = rl_encode_nbits(i, to_encode, curr, size_to_encode);
-        if((i==0) || (((curr->n_bytes*8-(8-curr->bits_last))<
-                (smaller->n_bytes*8-(8-smaller->bits_last))))){
+        
+        /*Input needs to be reloaded, since b_to_uint32 uses breadv,
+            which changes the pointers.*/
+        breload(input, size, n_bytes, bits_last, bits_offset);
+        
+        /*Increases curr pointers.*/
+        run = rl_encode_nbits(i, to_encode, curr, size_to_encode);
+
+        /*Needs do be deallocated.*/
+        free(to_encode);
+        
+        if(i==1){
             bit_buffer_cpy(smaller, curr);
-            *nbits_run = i;
-            *nbits_code = code;
+            *nbits_run = run;
+            *nbits_code = i;
+        }else if((curr->n_bytes*8-(8-curr->bits_last))<
+                (smaller->n_bytes*8-(8-smaller->bits_last))){
+            /*Deallocates last smaller*/
+            bdestroy(smaller);
+            binit(smaller, 1);
+
+            /*Increases smaller pointers and decreases curr pointers*/
+            bit_buffer_cpy(smaller, curr);
+            *nbits_run = run;
+            *nbits_code = i;
+            
         }
+        /*Needs to be deallocated*/
+        bdestroy(curr);
+        binit(curr, 1);
     }
     bit_buffer_cpy(output, smaller);
     bdestroy(smaller);
@@ -43,7 +69,10 @@ uint32_t rl_encode_nbits(uint8_t nbits, uint32_t *input,
 
     longest_run = find_longest_run(input, input_length);
     longest_run = ceil((float)log(longest_run)/log(2));
+    
+    
     if(longest_run == 0) longest_run = 1;
+    
 
     for(i=0; i<input_length; i++){   
         if(i!=0 && input[i] == input[i-1]){
@@ -68,18 +97,20 @@ uint32_t rl_encode_nbits(uint8_t nbits, uint32_t *input,
 
 uint32_t find_longest_run(uint32_t *input, uint32_t input_length){
     uint32_t longest_run = 1, curr_run = 1, i;
-    
+
     for (i=0; i<input_length; i++){
         if((i!=0) && (input[i]==input[i-1])){
             curr_run++;
         }else{
-            if(input[i]!=input[i-1]){
+            if((i!=0) && input[i]!=input[i-1]){
                 if(curr_run>longest_run)
                     longest_run = curr_run;
             }
             curr_run = 1;
         }
     }
+    if(input[input_length-1] == input[input_length-2])
+        longest_run = curr_run;
     return longest_run; 
 }
 
@@ -91,6 +122,6 @@ void rl_decode(uint16_t bits_per_sample, uint32_t nbits_code, uint32_t nbits_run
         breadv(input, &code, nbits_code);
         breadv(input, &run, nbits_run);
         for (i=0; i<run; i++)
-            bwritev(output, code, bits_per_sample);
+            bwritev(output, code, bits_per_sample/8);
     }
 }

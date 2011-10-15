@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <bitio.h>
+#include <inttypes.h>
 #include <run_length.h>
 
 int main(int argc, char* argv[]){ 
@@ -21,12 +22,15 @@ int main(int argc, char* argv[]){
 			bwrite(b, 1);
     }
 
-    rl_encode(b, bout, 16, &bits_run, &bits_code);
+    rl_encode(b, bout, 8, &bits_run, &bits_code);
 
     bprint(b);
     bprint(bout);
 
-    rl_decode(16, bits_code, bits_run, bout, bout2);
+    printf("bits run: %"PRIu32"\n", bits_run);
+    printf("bits code: %"PRIu32"\n", bits_code);
+    
+    rl_decode(8, bits_code, bits_run, bout, bout2);
     bprint(bout2);
     
     
@@ -34,7 +38,7 @@ int main(int argc, char* argv[]){
     bdestroy(bout);
     bdestroy(bout2);
     free(bout);
-    free(bout);
+    free(bout2);
     free(b);
     return 0;
 }

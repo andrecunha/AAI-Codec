@@ -129,20 +129,27 @@ int bflush(bitbuffer *b, FILE *f)
 
 void bit_buffer_cpy(bitbuffer *output, bitbuffer *input){
     uint8_t buf = 0;
+    uint32_t i=0;
+    uint32_t size = input->n_bytes*8-(8-input->bits_last);
 
     bdestroy(output);
     binit(output, 1);
+    input->bits_offset = 0;
 
-    while(!bempty(input)){
+    for(i=0; i<size; i++){
         bread(input, &buf);
         bwrite(output, buf);
     }
     
 }
 
-void breload(bitbuffer *b){
+void breload(bitbuffer *b, uint32_t size, unsigned long n_bytes,
+            unsigned int bits_last, unsigned int bits_offset){
+    b->size = size;
+    b->n_bytes = n_bytes;
+    b->bits_last = bits_last;
+    b->bits_offset = bits_offset;
     b->data = b->original_data;
-    b->bits_offset = 0; 
 }
 
 uint32_t b_to_uint32(bitbuffer *b, uint32_t **output, uint8_t nbits){

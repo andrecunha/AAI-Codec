@@ -92,7 +92,8 @@ int bflush(bitbuffer *b, FILE *f);
 
 void bit_buffer_cpy(bitbuffer *output, bitbuffer *input);
 
-void breload(bitbuffer *b);
+void breload(bitbuffer *b, uint32_t size, unsigned long n_bytes,
+            unsigned int bits_last, unsigned int bits_offset);
 
 /* Retorna o tamanho do vetor. Coloca o vetor em output. */
 uint32_t b_to_uint32(bitbuffer *b, uint32_t **output, uint8_t nbits);

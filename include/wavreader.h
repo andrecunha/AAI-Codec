@@ -1,7 +1,7 @@
 #ifndef WAVREADER_H
 #define WAVREADER_H
 
-/*! \file wavereader.h
+/*! \file wavreader.h
  *  \brief Defines operations over wav files' headers.
  */
 
@@ -29,6 +29,7 @@ struct _wavheader {
     uint16_t bitsPerSample;
     uint32_t data;
     uint32_t subchunk2size;
+    uint32_t endianness;
 };
 
 /*! \var typedef struct _wavheader wavheader;
@@ -54,7 +55,11 @@ int read_byte(FILE *fp, uint8_t *c);
 
 int read_4_bytes(FILE *fp, uint32_t *out, int endianness);
 
+int read_3_bytes(FILE *fp, uint32_t *out, int endianness);
+
 int read_2_bytes(FILE *fp, uint16_t *out, int endianness);
+
+int load_to_uint32(FILE *fp, wavheader *h, uint32_t ***output);
 
 /*! \fn void printWavHeader(wavheader *wh);
  *  \brief Prints the WAV header.

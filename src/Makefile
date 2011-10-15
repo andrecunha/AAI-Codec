@@ -26,3 +26,7 @@ run_length_test: run_length_test.c run_length.c
 hf_test: hf_test.c bitio.c priority_queue.c huffman.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o hf_test hf_test.c bitio.c priority_queue.c huffman.c
 
+huffman_test: huffman.c huffman_test.c bitio.c priority_queue.c wavreader.c
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o huffman_test huffman_test.c bitio.c priority_queue.c huffman.c wavreader.c
+
+

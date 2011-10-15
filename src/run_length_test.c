@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
         if(fread(&c, sizeof(uint8_t), 1, fp)!=1){
             IO_READ_ERROR;
             printf("Aqui");
-     /*       fclose(fp);
+            fclose(fp);
             free(wh);
             bdestroy(b);
             bdestroy(bout);
@@ -48,11 +48,11 @@ int main(int argc, char* argv[]){
             free(bout);
             free(bout2);
             free(b);
-            return 1;*/
+            return 1;
             c=EOF;
         }
         reads+=8;
-        if(c!=EOF){
+        if(!feof(fp)){
             bwritev(b, (uint32_t) c, 8);
 
             for(i=1; i < wh->bitsPerSample/8; i++){
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
                 reads+=8;
            }
         }
-    }while((c!=EOF)&&(reads<wh->bitsPerSample*80));
+    }while((!feof(fp))&&(reads<wh->bitsPerSample*400));
 
 
     rl_encode(b, bout, wh->bitsPerSample, &bits_run, &bits_code);

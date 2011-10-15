@@ -127,10 +127,9 @@ int bflush(bitbuffer *b, FILE *f)
 	return 0;
 }
 
-void bit_buffer_cpy(bitbuffer *output, bitbuffer *input){
+void bit_buffer_cpy(bitbuffer *output, bitbuffer *input, uint32_t size){
     uint8_t buf = 0;
     uint32_t i=0;
-    uint32_t size = input->n_bytes*8-(8-input->bits_last);
 
     bdestroy(output);
     binit(output, 1);

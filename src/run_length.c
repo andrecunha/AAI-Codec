@@ -6,11 +6,16 @@
 #include <bitio.h>
 #include <run_length.h>
 
+#define H_NBITS_CODE 6
+#define H_NBITS_RUN 5
+#define H_NBITS_NCODES 5
+#define H_NBITS_TOTAL 16
+
 void rl_encode(bitbuffer *input, bitbuffer *output, 
         uint16_t bits_per_sample, uint32_t *nbits_run, uint32_t *nbits_code){
     uint32_t *to_encode, size_to_encode;
     uint32_t i = 0, run;
-    bitbuffer *smaller, *curr;
+    bitbuffer *smaller, *curr, *curr2;
     uint32_t size = input->size;
     unsigned long n_bytes = input->n_bytes;
     unsigned int bits_last = input->bits_last;
@@ -18,8 +23,14 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
     
     smaller = malloc(sizeof(bitbuffer));
     curr = malloc(sizeof(bitbuffer));
+    curr2 = malloc(sizeof(bitbuffer));
     binit(smaller, 1);
-    binit(curr, 1);
+    binit(curr, 1);    
+    binit(curr2, 1);    
+
+    /*Increases smaller curr2 and decreases input pointers*/
+    /*bit_buffer_cpy(curr2, input, input->n_bytes*8-(8-input->bits_last));*/
+
 
     for(i=1; i<=bits_per_sample; i++){
         /*Allocates memory to to_encode.*/
@@ -36,7 +47,7 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
         free(to_encode);
         
         if(i==1){
-            bit_buffer_cpy(smaller, curr);
+            bit_buffer_cpy(smaller, curr, curr->n_bytes*8-(8-curr->bits_last));
             *nbits_run = run;
             *nbits_code = i;
         }else if((curr->n_bytes*8-(8-curr->bits_last))<
@@ -46,7 +57,7 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
             binit(smaller, 1);
 
             /*Increases smaller pointers and decreases curr pointers*/
-            bit_buffer_cpy(smaller, curr);
+            bit_buffer_cpy(smaller, curr, curr->n_bytes*8-(8-curr->bits_last));
             *nbits_run = run;
             *nbits_code = i;
             
@@ -55,7 +66,7 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
         bdestroy(curr);
         binit(curr, 1);
     }
-    bit_buffer_cpy(output, smaller);
+    bit_buffer_cpy(output, smaller, smaller->n_bytes*8-(8-smaller->bits_last));
     bdestroy(smaller);
     bdestroy(curr);
     free(smaller);

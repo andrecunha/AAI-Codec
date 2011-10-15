@@ -90,7 +90,7 @@ void bwritev(bitbuffer *b, uint32_t data, unsigned int count);
  */
 int bflush(bitbuffer *b, FILE *f);
 
-void bit_buffer_cpy(bitbuffer *output, bitbuffer *input);
+void bit_buffer_cpy(bitbuffer *output, bitbuffer *input, uint32_t size);
 
 void breload(bitbuffer *b, uint32_t size, unsigned long n_bytes,
             unsigned int bits_last, unsigned int bits_offset);

@@ -32,7 +32,6 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
         
         /*Increases curr pointers.*/
         run = rl_encode_nbits(i, to_encode, curr, size_to_encode);
-
         /*Needs do be deallocated.*/
         free(to_encode);
         
@@ -63,6 +62,25 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
     free(curr);
 }
 
+void print_encoded(bitbuffer *input, uint32_t nbits_run, 
+            uint32_t nbits_code){
+    uint32_t code, run, i, size;
+    size = input->n_bytes*8-(8-input->bits_last);
+    uint32_t sizet = input->size;
+    unsigned long n_bytes = input->n_bytes;
+    unsigned int bits_last = input->bits_last;
+    unsigned int bits_offset = input->bits_offset;
+    
+
+    for(i=0; i< size; i+=(nbits_run+nbits_code)){
+        breadv(input, &code, nbits_code);
+        breadv(input, &run, nbits_run);
+        printf("Encoded: code: %"PRIu32"\ttimes: %"PRIu32"\n", code, run);
+    }
+
+    breload(input, sizet, n_bytes, bits_last, bits_offset);
+}
+
 uint32_t rl_encode_nbits(uint8_t nbits, uint32_t *input, 
                     bitbuffer *output, uint32_t input_length){
     uint32_t i, count, longest_run;
@@ -91,7 +109,7 @@ uint32_t rl_encode_nbits(uint8_t nbits, uint32_t *input,
 
     bwritev(output, input[input_length-1], nbits);
     bwritev(output, count, longest_run); 
-
+    
     return longest_run;
 }
 
@@ -109,7 +127,7 @@ uint32_t find_longest_run(uint32_t *input, uint32_t input_length){
             curr_run = 1;
         }
     }
-    if(input[input_length-1] == input[input_length-2])
+    if((input[input_length-1] == input[input_length-2]) && curr_run > longest_run)
         longest_run = curr_run;
     return longest_run; 
 }

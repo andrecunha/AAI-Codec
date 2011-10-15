@@ -26,6 +26,8 @@ void rl_encode(bitbuffer *input, bitbuffer *output, uint16_t bits_per_sample, ui
 uint32_t rl_encode_nbits(uint8_t nbits, uint32_t *input, 
                     bitbuffer *output, uint32_t input_length);
 
+void print_encoded(bitbuffer *input, uint32_t nbits_run, uint32_t nbits_code);
+
 /*! \fn uint32_t find_longest_run(uint32_t *input, uint32_t input_length)
  *  \brief Finds the longest run in a vector of codes.
  *

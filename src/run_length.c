@@ -69,7 +69,8 @@ void rl_encode_var(bitbuffer *input, bitbuffer *output,
                 bwritev(output, run, H_NBITS_RUN);
                 bwritev(output, (out->n_bytes*8-(8-out->bits_last))/(code+run), 
                                         H_NBITS_NCODES);
-                /*bprintf("code: %"PRIu32"\trun: %"PRIu32"\tsamples %"PRIu32"\n", code, run, );*/
+                printf("code: %"PRIu32"\trun: %"PRIu32"\tsamples %"PRIu32"\n", code, run, (out->n_bytes*8-(8-out->bits_last))/(code+run) );
+                print_encoded(out, run, code);
                 bit_buffer_cpy(output, out, out->n_bytes*8-(8-out->bits_last));
             }else if(i+1 >= size-encoded){
                 encoded += i;
@@ -77,6 +78,8 @@ void rl_encode_var(bitbuffer *input, bitbuffer *output,
                 bwritev(output, run, H_NBITS_RUN);
                 bwritev(output, (out->n_bytes*8-(8-out->bits_last))/(code+run), 
                                         H_NBITS_NCODES);
+                printf("code: %"PRIu32"\trun: %"PRIu32"\tsamples %"PRIu32"\n", code, run, (out->n_bytes*8-(8-out->bits_last))/(code+run) );
+                print_encoded(out, run, code);
                 bit_buffer_cpy(output, out, out->n_bytes*8-(8-out->bits_last));
             }
         }       
@@ -94,7 +97,7 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
     uint32_t *to_encode, size_to_encode;
     uint32_t i = 0, run;
     bitbuffer *smaller, *curr;
-    uint32_t size = input->size, x;
+    uint32_t size = input->size;
     unsigned long n_bytes = input->n_bytes;
     unsigned int bits_last = input->bits_last;
     unsigned int bits_offset = input->bits_offset;
@@ -167,6 +170,7 @@ void print_encoded(bitbuffer *input, uint32_t nbits_run,
     for(i=0; i< size; i+=(nbits_run+nbits_code)){
         breadv(input, &code, nbits_code);
         breadv(input, &run, nbits_run);
+        printf("Code %"PRIu32" %"PRIu32" times\n", code, run);
     }
 
     breload(input, sizet, n_bytes, bits_last, bits_offset);
@@ -256,7 +260,6 @@ void rl_decode_var(uint16_t bits_per_sample,
         breadv(input, &code, H_NBITS_CODE);
         breadv(input, &run, H_NBITS_RUN);
         breadv(input, &nsamples, H_NBITS_NCODES);
-        printf("CODE: %"PRIu32"\t RUN %"PRI);
         i += H_NBITS_TOTAL;
         if(code == 0 || run == 0 || nsamples==0) break; 
         i+=nsamples*(code+run);

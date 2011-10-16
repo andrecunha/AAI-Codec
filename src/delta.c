@@ -5,9 +5,13 @@
 #include <inttypes.h>
 #include <bitio.h>
 
-uint32_t dt_encode(int32_t *input, int32_t *output, uint32_t lenght){
+uint32_t dt_encode(int32_t *input, int32_t *output, uint32_t lenght)
+{
 
-    uint32_t i;
+    int32_t i;
+    int32_t diff,res;
+    int32_t max_diff = 0;
+    int32_t min_diff = 0;
 
     output[0]=input[0];
 
@@ -15,23 +19,26 @@ uint32_t dt_encode(int32_t *input, int32_t *output, uint32_t lenght){
     for(i=1; i< lenght; i++)
         output[i] = input[i]-input[i-1];
 
-
-    /*Routine to get the largest difference between two consecutive samples in the audio file.*/
-    int32_t max_dif = 0, dif;
+    /*Routine to get the largest diffference between two consecutive samples in the audio file.*/
     for(i=1; i < lenght; i++){
-        dif = input[i] - input[i-1];
-        if(dif > max_dif)
-            max_dif = dif;
+        diff = input[i] - input[i-1];
+        if(diff > max_diff)
+            max_diff = diff;
+        else if(diff < min_diff)
+            min_diff = diff;
     }
 
-    /*return ceil(log(max_dif)/log(2));*/
-    return 0;
+    if(abs(max_diff)>abs(min_diff))
+        res = max_diff;
+        else res = min_diff;
 
+    return ceil(log(abs(res))/log(2));
 }
 
 
 /*Decode function. It will receive a delta parameter, and lenght information of the file that it will decde.*/
-void dt_decode(int32_t *input, int32_t *output,uint32_t lenght){
+void dt_decode(int32_t *input, int32_t *output,uint32_t lenght)
+{
     uint32_t i;
 
     output[0] = input[0];

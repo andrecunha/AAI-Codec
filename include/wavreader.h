@@ -1,13 +1,15 @@
-#ifndef WAVREADER_H
-#define WAVREADER_H
+#ifndef WAV_HEADER_H
+#define WAV_HEADER_H
 
-/*! \file wavreader.h
- *  \brief Defines operations over wav files' headers.
+/*! \file wavheader.h
+ *  \brief Defines operations over umcompressed wav files' headers.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+
+#include "bitio.h"
 
 #define LITTLE_ENDIAN 0
 #define BIG_ENDIAN 1
@@ -32,8 +34,8 @@ struct _wavheader {
     uint32_t endianness;
 };
 
-/*! \var typedef struct _wavheader wavheader;
- *  \brief A type definition to represent the WAV header;
+/*! \var typedef struct _wavheader wavheader.
+ *  \brief A type definition to represent the WAV header.
  */
 typedef struct _wavheader wavheader;
 
@@ -61,6 +63,8 @@ int read_2_bytes(FILE *fp, uint16_t *out, int endianness);
 
 int load_to_uint32(FILE *fp, wavheader *h, uint32_t ***output);
 
+int load_to_bitbuffer (FILE *fp, wavheader *h,  bitbuffer **output);
+
 /*! \fn void printWavHeader(wavheader *wh);
  *  \brief Prints the WAV header.
  *
@@ -68,4 +72,4 @@ int load_to_uint32(FILE *fp, wavheader *h, uint32_t ***output);
  */
 void printWavHeader(wavheader *wh);
 
-#endif
+#endif /* WAV_HEADER_H */

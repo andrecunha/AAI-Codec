@@ -275,10 +275,27 @@ int load_to_uint32(FILE *fp, wavheader *h, uint32_t ***output)
 
                 curr_position++;
         }
-        printf("Last value of curr_position=%"PRIu32"\n", curr_position);
-        getchar();
         return 0;
 }
+
+int load_to_bitbuffer (FILE *fp, wavheader *h,  bitbuffer **output)
+{
+        uint32_t ** uint32_data;
+        load_to_uint32(fp, h, &uint32_data);
+        *output = calloc(h->numChannels, sizeof(bitbuffer));
+
+        uint32_t channel_size_bits = ((h->subchunk2size)/(h->numChannels))*8;
+        uint32_t channel_size_samples = (h->subchunk2size)/(h->numChannels)/((h->bitsPerSample)/8);
+
+        int curr_channel;
+        for(curr_channel=0; curr_channel<h->numChannels; curr_channel++) {
+                binit(&(*output)[curr_channel], channel_size_bits);
+                b_from_uint32(&(*output)[curr_channel], uint32_data[curr_channel], channel_size_samples, h->bitsPerSample, 8); /*XXX: 8 mesmo?*/
+        }
+
+        return 0;
+}
+
 
 void printWavHeader(wavheader *wh){
     printf("riff: %"PRIu32"\n", wh->riff);

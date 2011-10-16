@@ -21,8 +21,8 @@ bit_test: bit_test.c bitio.c
 wav_test: wav_test.c wavreader.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o wav_test wav_test.c wavreader.c
 
-encoder: encoder.c
-	$(CC) $(CFLAGS) -I$(INCLUDE) -o encode encoder.c
+encoder: encode.c
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o encode encode.c
 
 run_length_test: run_length_test.c run_length.c bitio.c wavreader.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o run_length_test run_length_test.c run_length.c bitio.c wavreader.c
@@ -53,6 +53,6 @@ run_length: run_length.c
 huffman: huffman.c bitio priority_queue
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o huffman.o -c huffman.c
 
-encode: encoder.c huffman run_length delta bitio wavreader
-	$(CC) $(CFLAGS) -I$(INCLUDE) -o encode encoder.c huffman.o run_length.o delta.o bitio.o priority_queue.o wavreader.o
+encode: encode.c huffman run_length delta bitio wavreader
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o encode encode.c huffman.o run_length.o delta.o bitio.o priority_queue.o wavreader.o
 

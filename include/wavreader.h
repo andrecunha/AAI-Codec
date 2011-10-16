@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "bitio.h"
+
 #define LITTLE_ENDIAN 0
 #define BIG_ENDIAN 1
 
@@ -60,6 +62,8 @@ int read_3_bytes(FILE *fp, uint32_t *out, int endianness);
 int read_2_bytes(FILE *fp, uint16_t *out, int endianness);
 
 int load_to_uint32(FILE *fp, wavheader *h, uint32_t ***output);
+
+int load_to_bitbuffer (FILE *fp, wavheader *h,  bitbuffer **output);
 
 /*! \fn void printWavHeader(wavheader *wh);
  *  \brief Prints the WAV header.

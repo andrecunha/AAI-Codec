@@ -10,9 +10,9 @@
 #include <delta.h>
 #include <run_length.h>
 
-#define HUFFMAN 1
-#define DELTA 2
-#define RUN_LENGTH 3
+#define HUFFMAN     1
+#define DELTA       2
+#define RUN_LENGTH  3
 
 typedef int boolean;
 #define TRUE 1
@@ -89,25 +89,44 @@ void enc_prepare_output_file (FILE *fp)
 
 void enc_huffman(int previous, FILE *in_fp)
 {
-        if (previous == -1) {
+        printf("Applying Huffman encoding...\n");
 
-                uint32_t channel_size = (input_file_header->subchunk2size)/(input_file_header->numChannels)/((input_file_header->bitsPerSample)/8);
+        uint32_t channel_size = (input_file_header->subchunk2size)/(input_file_header->numChannels)/((input_file_header->bitsPerSample)/8);
+        int curr_channel=0;
+        switch (previous) {
+                case (-1):
+                        {
+                                /* Huffman is the first encoding option. */
 
-                /* Huffman is the first encoding option. */
-                printf("Applying Huffman encoding...\n");
+                                load_to_uint32(in_fp, input_file_header, &data_vector);
 
-                load_to_uint32(in_fp, input_file_header, &data_vector);
+                                output_buffer = malloc(input_file_header->numChannels*sizeof(bitbuffer));
 
-                output_buffer = malloc(input_file_header->numChannels*sizeof(bitbuffer));
+                                for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+                                        binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
+                                        /* We encode each channel in a separate bit buffer. */
+                                        hf_encode(data_vector[curr_channel], &output_buffer[curr_channel], &frequencies, channel_size, pow(2,input_file_header->bitsPerSample));
 
-                int curr_channel=0;
-                for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                        binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
-                        /* We encode each channel in a separate bit buffer. */
-                        hf_encode(data_vector[curr_channel], &output_buffer[curr_channel], &frequencies, channel_size, pow(2,input_file_header->bitsPerSample));
+                                        printf("nbytes of channel %d: %lu \n", curr_channel, output_buffer[curr_channel].n_bytes);
+                                }
+                        }
+                        break;
 
-                        printf("nbytes of channel %d: %lu \n", curr_channel, output_buffer[curr_channel].n_bytes);
-                }
+                case RUN_LENGTH:
+                        {
+
+                                if(!data_vector) 
+                                        data_vector = calloc(input_file_header->numChannels, sizeof(uint32_t *));
+
+                                for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+                                        uint32_t size = (output_buffer[curr_channel].n_bytes*8 - (8-output_buffer[curr_channel].bits_last))/(nbits_run + nbits_code);
+                                        b_to_uint32(&(output_buffer[curr_channel]), &(data_vector[curr_channel]), nbits_run + nbits_code);
+                                        bdestroy(&(output_buffer[curr_channel]));
+                                        binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
+                                        hf_encode(data_vector[curr_channel], &output_buffer[curr_channel], &frequencies, size, pow(2,nbits_run + nbits_code));
+                                }
+                        }
+                        break;
         }
 
         final_data = OUTPUT_BUFFER;
@@ -116,17 +135,43 @@ void enc_huffman(int previous, FILE *in_fp)
 void enc_run_length(int previous, FILE *in_fp)
 {
     printf("Applying run-length encoding...\n");
-    if (previous == -1) {
-            /* Run-length is the first encoding. */
-            load_to_bitbuffer(in_fp, input_file_header, &data_buffer);
 
-            output_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
+    int curr_channel=0;
 
-            int curr_channel=0;
-            for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                    binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size);
-                    rl_encode(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), input_file_header->bitsPerSample, &nbits_run, &nbits_code);
+    switch (previous) {
+            case -1:
+                    {
+                    /* Run-length is the first encoding. */
+                    load_to_bitbuffer(in_fp, input_file_header, &data_buffer);
+
+                    output_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
+
+                    for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+                            binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size);
+                            rl_encode(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), input_file_header->bitsPerSample, &nbits_run, &nbits_code);
             }
+                    }
+                    break;
+
+            case HUFFMAN:
+                    {
+                            if(!data_buffer) {
+                                    data_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
+                            }
+                    for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+                            /* If Huffman has been applied before, so it's output is in output_buffer. We must copy it to data_buffer. */
+                            bdestroy(&(data_buffer[curr_channel]));
+
+                            binit(&(data_buffer[curr_channel]), input_file_header->subchunk2size);
+                            bit_buffer_cpy(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), output_buffer[curr_channel].n_bytes*8 - (8 - output_buffer[curr_channel].bits_last));
+                            bdestroy(&(output_buffer[curr_channel]));
+                            binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size);
+                            rl_encode(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), input_file_header->bitsPerSample, &nbits_run, &nbits_code);
+            }
+                    }
+                    break;
+
+
     }
 
     final_data = OUTPUT_BUFFER;
@@ -215,15 +260,13 @@ int main (int argc, char* argv[])
         else 
             enc_run_length(-1, in_fp);
 
-    /*XXX: Acertar os índices.*/
     if(sec_enc == HUFFMAN)
-            enc_huffman(0, in_fp);
+            enc_huffman(RUN_LENGTH, in_fp);
     else if(sec_enc == DELTA)
             enc_delta();
         else if(sec_enc == RUN_LENGTH) 
-                enc_run_length(-1, in_fp);
+                enc_run_length(HUFFMAN, in_fp);
     
-    /*XXX: Acertar os índices.*/
     if(third_enc == HUFFMAN)
             enc_huffman(0, in_fp);
     else if(third_enc == DELTA)

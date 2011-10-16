@@ -291,8 +291,10 @@ int load_to_bitbuffer (FILE *fp, wavheader *h,  bitbuffer **output)
         for(curr_channel=0; curr_channel<h->numChannels; curr_channel++) {
                 binit(&(*output)[curr_channel], channel_size_bits);
                 b_from_uint32(&(*output)[curr_channel], uint32_data[curr_channel], channel_size_samples, h->bitsPerSample, 8); /*XXX: 8 mesmo?*/
+                free(uint32_data[curr_channel]);
         }
 
+        free(uint32_data);
         return 0;
 }
 

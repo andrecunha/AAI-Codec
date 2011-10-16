@@ -96,7 +96,7 @@ void breload(bitbuffer *b, uint32_t size, unsigned long n_bytes,
             unsigned int bits_last, unsigned int bits_offset);
 
 /* Retorna o tamanho do vetor. Coloca o vetor em output. */
-uint32_t b_to_uint32(bitbuffer *b, uint32_t **output, uint8_t nbits, uint8_t *extra);
+uint32_t b_to_uint32(bitbuffer *b, uint32_t **output, uint8_t nbits);
 
 /* input_length é o tamanho do vetor de entrada. nbits é quantos bits de cada elemento do vetor de entrada serão colocados no buffer. */
 void b_from_uint32(bitbuffer *b, uint32_t *input, uint32_t input_length, uint8_t nbits, unsigned int b_last);

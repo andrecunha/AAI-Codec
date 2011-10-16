@@ -131,7 +131,7 @@ int getHeader(wavheader *wh, FILE *f){
 
 int read_byte(FILE *fp, uint8_t *c){
     if(fread(c, 1, 1 ,fp)!=1){
-        printf("ERROR: IO\n");
+        ERROR("IO error at wavreader.read_byte")
         return 1;
     }
     return 0;
@@ -140,10 +140,26 @@ int read_byte(FILE *fp, uint8_t *c){
 int read_4_bytes(FILE *fp, uint32_t *out, int endianness){
     uint8_t c[4];
 
-    if(read_byte(fp, &c[0])==1)return 1;
-    if(read_byte(fp, &c[1])==1)return 1;
-    if(read_byte(fp, &c[2])==1)return 1;
-    if(read_byte(fp, &c[3])==1)return 1;
+    if(read_byte(fp, &c[0])==1){
+        ERROR("IO error at wavreader.read_4_bytes")
+        return 1;
+    }
+
+    if(read_byte(fp, &c[1])==1){
+        ERROR("IO error at wavreader.read_4_bytes")
+        return 1;
+    }
+
+    if(read_byte(fp, &c[2])==1){
+        ERROR("IO error at wavreader.read_4_bytes")
+        return 1;
+    }
+
+    if(read_byte(fp, &c[3])==1){
+        ERROR("IO error at wavreader.read_4_bytes")
+        return 1;
+    }
+
     
     *out = 0;    
 
@@ -164,9 +180,18 @@ int read_4_bytes(FILE *fp, uint32_t *out, int endianness){
 int read_3_bytes(FILE *fp, uint32_t *out, int endianness){
     uint8_t c[4];
 
-    if(read_byte(fp, &c[0]))return 1;
-    if(read_byte(fp, &c[1]))return 1;
-    if(read_byte(fp, &c[2]))return 1;
+    if(read_byte(fp, &c[0])){
+        ERROR("IO error at wavreader.read_3_bytes")
+        return 1;
+    }
+    if(read_byte(fp, &c[1])){
+        ERROR("IO error at wavreader.read_3_bytes")
+        return 1;
+    }
+    if(read_byte(fp, &c[2])){
+        ERROR("IO error at wavreader.read_3_bytes")
+        return 1;
+    }
     
     *out = 0;    
 
@@ -185,8 +210,14 @@ int read_3_bytes(FILE *fp, uint32_t *out, int endianness){
 int read_2_bytes(FILE *fp, uint16_t *out, int endianness){
     uint8_t c[2];
 
-    if(read_byte(fp, &c[0])) return 1;
-    if(read_byte(fp, &c[1])) return 1;
+    if(read_byte(fp, &c[0])){
+        ERROR("IO error at wavreader.read_2_bytes")
+        return 1;
+    }
+    if(read_byte(fp, &c[1])){
+        ERROR("IO error at wavreader.read_2_bytes")
+        return 1;
+    }
 
     *out = 0;   
  
@@ -202,10 +233,13 @@ int read_2_bytes(FILE *fp, uint16_t *out, int endianness){
 
 int load_to_uint32(FILE *fp, wavheader *h, uint32_t ***output)
 {
+
         *output = malloc(h->numChannels*sizeof(uint32_t *));
         int i;
         uint32_t **_output = *output;
-        uint32_t channel_size = h->subchunk2size/h->numChannels;
+        /*TODO: É aqui o pobrema!!!!!!*/
+        uint32_t channel_size = (h->subchunk2size)/(h->numChannels)/((h->bitsPerSample)/8);
+        printf("channel_size = %"PRIu32"\n", channel_size);
         for(i=0; i<h->numChannels; i++)
                 _output[i] = malloc(channel_size*sizeof(uint32_t));
 
@@ -213,21 +247,26 @@ int load_to_uint32(FILE *fp, wavheader *h, uint32_t ***output)
         uint32_t curr_position=0;
         uint8_t b;
         uint16_t bb;
-        while(!feof(fp)) {
+        unsigned long count;
+        for(count=0; count<channel_size; count++) {
                 for(curr_channel=0; curr_channel<h->numChannels; curr_channel++) {
                         switch(h->bitsPerSample) {
                                 case 8: read_byte(fp, &b);
                                         _output[curr_channel][curr_position] = b;
                                         break;
-                                case 16: read_2_bytes(fp, &bb, h->endianness);
-                                         _output[curr_channel][curr_position] = bb;
+                                case 16: if (!read_2_bytes(fp, &bb, h->endianness))
+                                                 _output[curr_channel][curr_position] = bb;
+                                         else {
+                                                 printf("ERROR: Error while loading sample %"PRIu32" from channel %d.\n", curr_position, curr_channel);
+                                                 return 1;
+                                         }
                                          break;
                                 case 24: read_3_bytes(fp, &_output[curr_channel][curr_position], h->endianness);
                                          break;
                                 case 32: read_4_bytes(fp, &_output[curr_channel][curr_position], h->endianness);
                                          break;
                                 default:
-                                        ERROR("Unsupported bit rate.");
+                                        ERROR("Unsupported bit rate.")
                                         exit(1);
                                         break;
                         }
@@ -236,6 +275,8 @@ int load_to_uint32(FILE *fp, wavheader *h, uint32_t ***output)
 
                 curr_position++;
         }
+        printf("Last value of curr_position=%"PRIu32"\n", curr_position);
+        getchar();
         return 0;
 }
 

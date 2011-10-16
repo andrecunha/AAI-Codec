@@ -102,6 +102,8 @@ void hf_encode (uint32_t *input, bitbuffer *output, uint64_t **frequencies_outpu
 	/* To encode the input vector, we first calculate the frequencies of the symbols in it.*/
 	*frequencies_output = calloc(frequency_length, sizeof(uint64_t));
 
+    memset(*frequencies_output, 0, frequency_length*sizeof(uint64_t));
+
 	hf_compute_frequencies(input, *frequencies_output, input_length);
 
 	/* Then, we build the Huffman tree. */

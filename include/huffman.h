@@ -54,17 +54,18 @@ void hf_build_tree (hf_tree_node **result, uint64_t *frequencies, uint32_t frequ
 void hf_traverse (hf_tree_node *root, uint8_t* output[], uint32_t length);
 
 /*! \fn void hf_encode (uint32_t *input, bitbuffer *output, uint32_t input_length, uint32_t frequency_length)
- *  \brief Encodes the input vector, storing the result in the output bit buffer.
+ *  \brief Encodes the input vector, storing the result in the output bit buffer and storing the frequencies in the output frequency vector.
  *
  *  \param input The input vector.
  *  \param output The output bif buffer.
+ *  \param frequencies_output The output frequency vector.
  *  \param input_length The length of the input vector.
  *  \param frequency_length The length of the frequency vector (the number of different symbols in the input).
  *
  *  \return The Huffman tree generated during the encoding process.
  */
 
-void hf_encode (uint32_t *input, bitbuffer *output, uint32_t input_length, uint32_t frequency_length);
+void hf_encode (uint32_t *input, bitbuffer *output, uint64_t **frequencies_output, uint32_t input_length, uint32_t frequency_length);
 
 /*! \fn void hf_decode (bitbuffer *input, uint64_t frequencies, uint32_t *output, uint32_t length);
  *  \brief Decodes the bit sequence stored in the input bit buffer, and stores the result in the output vector.

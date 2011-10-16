@@ -97,20 +97,20 @@ void hf_traverse (hf_tree_node *root, uint8_t* output[], uint32_t length)
 }
 
 
-void hf_encode (uint32_t *input, bitbuffer *output, uint32_t input_length, uint32_t frequency_length)
+void hf_encode (uint32_t *input, bitbuffer *output, uint64_t **frequencies_output, uint32_t input_length, uint32_t frequency_length)
 {
 	/* To encode the input vector, we first calculate the frequencies of the symbols in it.*/
-	uint64_t *frequencies = calloc(frequency_length, sizeof(uint64_t));
+	*frequencies_output = calloc(frequency_length, sizeof(uint64_t));
 
-	hf_compute_frequencies(input, frequencies, input_length);
+    memset(*frequencies_output, 0, frequency_length*sizeof(uint64_t));
+
+	hf_compute_frequencies(input, *frequencies_output, input_length);
 
 	/* Then, we build the Huffman tree. */
 	hf_tree_node *root;
 	/*hf_build_tree(&root, frequencies, length);*/
 	
-	hf_build_tree(&root, frequencies, frequency_length);
-
-	free(frequencies);
+	hf_build_tree(&root, *frequencies_output, frequency_length);
 
 	/* Then, we traverse the tree to obtain the code for each symbol. */
 	uint8_t **codes = malloc(frequency_length*sizeof(uint8_t*));

@@ -118,10 +118,10 @@ int breadv(bitbuffer *b, uint32_t *output, unsigned int count)
 
 int bflush(bitbuffer *b, FILE *f)
 {	
-	if(fwrite(&b->size, sizeof(uint32_t), 1, f)!=1) return 1;
+	if(fwrite(&b->n_bytes, sizeof(unsigned long), 1, f)!=1) return 1;
 	if(fwrite(&b->bits_last, sizeof(unsigned int), 1, f)!=1) return 1;
 
-	if (fwrite(b->original_data, sizeof(uint8_t), b->size, f) != b->size)
+	if (fwrite(b->original_data, sizeof(uint8_t), b->n_bytes, f) != b->n_bytes)
 		return 1;
 
 	return 0;
@@ -176,14 +176,14 @@ void b_from_uint32(bitbuffer *b, uint32_t *input,
 
 int bget(bitbuffer *b, FILE *f)
 {	
-	if(fread(&b->size, sizeof(uint32_t), 1, f)!=1) return 1;	
+	if(fread(&b->n_bytes, sizeof(unsigned long), 1, f)!=1) return 1;
 	if(fread(&b->bits_last, sizeof(unsigned int), 1, f)!=1) return 1;
-    b->n_bytes = b->size;
+    b->size = b->n_bytes;
     b->bits_offset = 0;
 	b->data = b->original_data = malloc(b->size);
 
 	if (b->data) memset(b->data, 0, b->size);
-	else return 1;	
+	else return 1;
 	
 	if (fread(b->data, sizeof(uint8_t), b->size, f) != b->size)
 		return 1;

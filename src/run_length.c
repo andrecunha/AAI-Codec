@@ -5,16 +5,17 @@
 #include <math.h>
 #include <bitio.h>
 #include <run_length.h>
+#include <error_handler.h>
 
-#define H_NBITS_CODE 6
+#define H_NBITS_CODE 5
 #define H_NBITS_RUN 5
-#define H_NBITS_NCODES 5
-#define H_NBITS_TOTAL 16
+#define H_NBITS_NCODES 10
+#define H_NBITS_TOTAL H_NBITS_NCODES+H_NBITS_RUN+H_NBITS_CODE
 
 void rl_encode_var(bitbuffer *input, bitbuffer *output,
         uint16_t bits_per_sample, uint32_t *nbits_run, uint32_t *nbits_code){
-    bitbuffer *curr, *out, *new_input;
-    uint32_t i, run, code;
+    bitbuffer *curr, *out, *new_input, *last;
+    uint32_t i, run, code, runl, codel, li;
     uint32_t size = input->size, encoded = 0;
     unsigned long n_bytes = input->n_bytes;
     unsigned int bits_last = input->bits_last;
@@ -24,14 +25,20 @@ void rl_encode_var(bitbuffer *input, bitbuffer *output,
     unsigned long n_bytesn;
     unsigned int bits_lastn;
     unsigned int bits_offsetn;
+    uint32_t sizeo;
+    unsigned long n_byteso;
+    unsigned int bits_lasto;
+    unsigned int bits_offseto;
 
     out = malloc(sizeof(bitbuffer));
     curr = malloc(sizeof(bitbuffer));
     new_input = malloc(sizeof(bitbuffer));
+    last = malloc(sizeof(bitbuffer));
     
     binit(curr, 1);
     binit(out, 1);
     binit(new_input, 1);
+    binit(last,1);
 
     while(encoded < size){
         breload(input, size, n_bytes, bits_last, bits_offset);
@@ -52,14 +59,60 @@ void rl_encode_var(bitbuffer *input, bitbuffer *output,
         leave = 0;
         while((i<(size-encoded))&&!leave){
             i++;
+
             bdestroy(curr);
             binit(curr, 1);
             bit_buffer_cpy(curr, new_input, i*8);
+
             breload(new_input, sizen, n_bytesn, bits_lastn, bits_offsetn);
             
             bdestroy(out);
             binit(out, 1);
+
             rl_encode(curr, out, bits_per_sample, &run, &code);
+
+            /*If NSAMPLES overflowed*/
+            if((out->n_bytes*8-(8-out->bits_last)/(run+code) > 
+                (pow(H_NBITS_NCODES,2)-1))){
+
+/*                ERROR("Sample overflow");
+                printf("i: %"PRIu32"\n", i);*/
+
+                if(last->n_bytes == 0){
+                    ERROR("NAO TEM LAST");
+                    continue;
+                }else{
+                    /*if there is a last, write it*/
+                    leave = 1;
+                    encoded += li;
+                    bwritev(output, codel, H_NBITS_CODE);
+                    bwritev(output, runl, H_NBITS_RUN);
+                    bwritev(output, (last->n_bytes*8-
+                            (8-last->bits_last))/(codel+runl), 
+                                        H_NBITS_NCODES);
+/*                    printf("code: %"PRIu32"\trun: %"PRIu32
+                        "\tsamples %"PRIu32"\n", 
+                        codel, runl, 
+                        (last->n_bytes*8-(8-last->bits_last))/(codel+runl) );
+                    print_encoded(last, runl, codel);*/
+                    bit_buffer_cpy(output, last, last->n_bytes*8-(8-last->bits_last));
+                    continue;
+                }
+            }else{
+                bdestroy(last);
+                binit(last, 1);
+                li = i;
+                codel = code;
+                runl = run;
+
+                sizeo = out->size;
+                n_byteso = out->n_bytes;
+                bits_lasto = out->bits_last;
+                bits_offseto = out->bits_offset; 
+
+                bit_buffer_cpy(last, out, out->n_bytes*8-(8-out->bits_last));
+                breload(out, sizeo, n_byteso, bits_lasto, bits_offseto );
+            }
 
             if((H_NBITS_TOTAL+out->n_bytes*8-(8-out->bits_last)) <
                 (i*8)){
@@ -69,8 +122,8 @@ void rl_encode_var(bitbuffer *input, bitbuffer *output,
                 bwritev(output, run, H_NBITS_RUN);
                 bwritev(output, (out->n_bytes*8-(8-out->bits_last))/(code+run), 
                                         H_NBITS_NCODES);
-                printf("code: %"PRIu32"\trun: %"PRIu32"\tsamples %"PRIu32"\n", code, run, (out->n_bytes*8-(8-out->bits_last))/(code+run) );
-                print_encoded(out, run, code);
+/*                printf("code: %"PRIu32"\trun: %"PRIu32"\tsamples %"PRIu32"\n", code, run, (out->n_bytes*8-(8-out->bits_last))/(code+run) );
+                print_encoded(out, run, code);*/
                 bit_buffer_cpy(output, out, out->n_bytes*8-(8-out->bits_last));
             }else if(i+1 >= size-encoded){
                 encoded += i;
@@ -78,8 +131,8 @@ void rl_encode_var(bitbuffer *input, bitbuffer *output,
                 bwritev(output, run, H_NBITS_RUN);
                 bwritev(output, (out->n_bytes*8-(8-out->bits_last))/(code+run), 
                                         H_NBITS_NCODES);
-                printf("code: %"PRIu32"\trun: %"PRIu32"\tsamples %"PRIu32"\n", code, run, (out->n_bytes*8-(8-out->bits_last))/(code+run) );
-                print_encoded(out, run, code);
+/*                printf("code: %"PRIu32"\trun: %"PRIu32"\tsamples %"PRIu32"\n", code, run, (out->n_bytes*8-(8-out->bits_last))/(code+run) );
+                print_encoded(out, run, code);*/
                 bit_buffer_cpy(output, out, out->n_bytes*8-(8-out->bits_last));
             }
         }       
@@ -87,6 +140,8 @@ void rl_encode_var(bitbuffer *input, bitbuffer *output,
     bdestroy(curr);
     bdestroy(out);
     bdestroy(new_input);
+    bdestroy(last);
+    free(last);
     free(curr);
     free(out);
     free(new_input);
@@ -170,8 +225,10 @@ void print_encoded(bitbuffer *input, uint32_t nbits_run,
     for(i=0; i< size; i+=(nbits_run+nbits_code)){
         breadv(input, &code, nbits_code);
         breadv(input, &run, nbits_run);
-        printf("Code %"PRIu32" %"PRIu32" times\n", code, run);
+        printf("Code %"PRIu32" %"PRIu32" times--", code, run);
     }
+    
+    printf("\n\n");
 
     breload(input, sizet, n_bytes, bits_last, bits_offset);
 }
@@ -182,13 +239,15 @@ uint32_t rl_encode_nbits(uint8_t nbits, uint32_t *input,
 
     longest_run = find_longest_run(input, input_length);
     longest_run = ceil((float)log(longest_run)/log(2));
+    if(longest_run>H_NBITS_RUN)
+        longest_run = H_NBITS_RUN;
     
     
     if(longest_run == 0) longest_run = 1;
     
 
     for(i=0; i<input_length; i++){
-        if(i!=0 && input[i] == input[i-1]){
+        if(i!=0 && input[i] == input[i-1] && count<(pow(H_NBITS_RUN,2))-1){
             count++;
         }else {
             if(i!=0){
@@ -261,11 +320,21 @@ void rl_decode_var(uint16_t bits_per_sample,
         breadv(input, &run, H_NBITS_RUN);
         breadv(input, &nsamples, H_NBITS_NCODES);
         i += H_NBITS_TOTAL;
-        if(code == 0 || run == 0 || nsamples==0) break; 
+        if(code == 0 || run == 0 || nsamples==0) {
+            if(code ==0)
+                ERROR("Code = 0");
+            if(run ==0)
+                ERROR("Run = 0");
+            if(nsamples ==0)
+                ERROR("Nsamples = 0");
+            break; 
+        } 
         i+=nsamples*(code+run);
    
         bit_buffer_cpy(new_input, input, nsamples*(code+run));
             
+/*        print_encoded(new_input, run, code);*/
+
         rl_decode(bits_per_sample, code, run, new_input, output);
     }
     

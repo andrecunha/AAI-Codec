@@ -57,46 +57,22 @@ void rl_encode_var(bitbuffer *input, bitbuffer *output,
             bit_buffer_cpy(curr, new_input, i*8);
             breload(new_input, sizen, n_bytesn, bits_lastn, bits_offsetn);
             
-        
-            
             bdestroy(out);
             binit(out, 1);
-            printf("\noutbefore: \n");
-            bprint(out);
-            printf("curr\n");
-            bprint(curr);
             rl_encode(curr, out, bits_per_sample, &run, &code);
-            bprint(out);
 
             if((H_NBITS_TOTAL+out->n_bytes*8-(8-out->bits_last)) <
                 (i*8)){
                 leave = 1;
                 encoded += i;
-                printf("bits code: %"PRIu32"\n", code);
-                printf("bits run: %"PRIu32"\n", run);
-                printf("samples: %"PRIu32"\n", (out->n_bytes*8-(8-out->bits_last))/(code+run));
-                    printf("newinput");
-                    bprint(new_input);
-                    printf("\noutput\n");
-                    bprint(output);
-                    printf("\nout\n");
-                    bprint(out);
                 bwritev(output, code, H_NBITS_CODE);
                 bwritev(output, run, H_NBITS_RUN);
                 bwritev(output, (out->n_bytes*8-(8-out->bits_last))/(code+run), 
                                         H_NBITS_NCODES);
+                /*bprintf("code: %"PRIu32"\trun: %"PRIu32"\tsamples %"PRIu32"\n", code, run, );*/
                 bit_buffer_cpy(output, out, out->n_bytes*8-(8-out->bits_last));
             }else if(i+1 >= size-encoded){
                 encoded += i;
-                printf("bits code: %"PRIu32"\n", code);
-                printf("bits run: %"PRIu32"\n", run);
-                printf("samples: %"PRIu32"\n", (out->n_bytes*8-(8-out->bits_last))/(code+run));
-                    printf("newinput");
-                    bprint(new_input);
-                    printf("\noutput\n");
-                    bprint(output);
-                    printf("\nout\n");
-                    bprint(out);
                 bwritev(output, code, H_NBITS_CODE);
                 bwritev(output, run, H_NBITS_RUN);
                 bwritev(output, (out->n_bytes*8-(8-out->bits_last))/(code+run), 
@@ -118,10 +94,11 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
     uint32_t *to_encode, size_to_encode;
     uint32_t i = 0, run;
     bitbuffer *smaller, *curr;
-    uint32_t size = input->size;
+    uint32_t size = input->size, x;
     unsigned long n_bytes = input->n_bytes;
     unsigned int bits_last = input->bits_last;
     unsigned int bits_offset = input->bits_offset;
+    uint8_t extra;
     
     smaller = malloc(sizeof(bitbuffer));
     curr = malloc(sizeof(bitbuffer));
@@ -133,9 +110,11 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
 
 
     for(i=1; i<=bits_per_sample; i++){
+        if(size%i)
+            continue;
         /*Allocates memory to to_encode.*/
         /*Decreases input pointers.*/
-        size_to_encode = b_to_uint32(input, &to_encode, i);
+        size_to_encode = b_to_uint32(input, &to_encode, i, &extra);
         
         /*Input needs to be reloaded, since b_to_uint32 uses breadv,
  * which changes the pointers.*/
@@ -166,6 +145,8 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
         bdestroy(curr);
         binit(curr, 1);
     }
+    
+
     bit_buffer_cpy(output, smaller, smaller->n_bytes*8-(8-smaller->bits_last));
     bdestroy(smaller);
     bdestroy(curr);
@@ -186,7 +167,6 @@ void print_encoded(bitbuffer *input, uint32_t nbits_run,
     for(i=0; i< size; i+=(nbits_run+nbits_code)){
         breadv(input, &code, nbits_code);
         breadv(input, &run, nbits_run);
-        printf("Encoded: code: %"PRIu32"\ttimes: %"PRIu32"\n", code, run);
     }
 
     breload(input, sizet, n_bytes, bits_last, bits_offset);
@@ -267,7 +247,7 @@ void rl_decode_var(uint16_t bits_per_sample,
     uint32_t code, run, nsamples, i = 0;
     
     binit(new_input, 1);
-    uint32_t size = input->n_bytes*8-(8-input->bits_last)-input->bits_offset;  
+    uint32_t size = input->n_bytes*8-(8-input->bits_last)-input->bits_offset; 
 
     while(i<size){
         bdestroy(new_input);
@@ -276,6 +256,7 @@ void rl_decode_var(uint16_t bits_per_sample,
         breadv(input, &code, H_NBITS_CODE);
         breadv(input, &run, H_NBITS_RUN);
         breadv(input, &nsamples, H_NBITS_NCODES);
+        printf("CODE: %"PRIu32"\t RUN %"PRI);
         i += H_NBITS_TOTAL;
         if(code == 0 || run == 0 || nsamples==0) break; 
         i+=nsamples*(code+run);

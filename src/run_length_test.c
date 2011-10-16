@@ -72,18 +72,18 @@ int main(int argc, char* argv[]){
                 reads+=8;
            }
         }
-    }while((!feof(fp))&&(reads<wh->bitsPerSample*400));
+    }while((!feof(fp))&&(reads<wh->bitsPerSample*(atoi(argv[2]))));
 
-
-    rl_encode(b, bout, wh->bitsPerSample, &bits_run, &bits_code);
 
     bprint(b);
+    rl_encode_var(b, bout, wh->bitsPerSample, &bits_run, &bits_code);
+
     bprint(bout);
 
     printf("bits run: %"PRIu32"\n", bits_run);
     printf("bits code: %"PRIu32"\n", bits_code);
  
-    rl_decode(wh->bitsPerSample, bits_code, bits_run, bout, bout2);
+    rl_decode_var(wh->bitsPerSample, bout, bout2);
     bprint(bout2);
     
     fclose(fp);

@@ -5,6 +5,9 @@
  *  \brief The main file for run_length encoding/decoding.
  */
 
+void rl_encode_var(bitbuffer *input, bitbuffer *output,
+        uint16_t bits_per_sample, uint32_t *nbits_run, uint32_t *nbits_code);
+
 /*! \fn void rl_encode(bitbuffer *input, bitbuffer *output)
  *  \brief Reads input bifbuffer, finds the best run size and encode.
  *
@@ -51,4 +54,6 @@ void rl_decode(uint16_t bits_per_sample,
             uint32_t nbits_code, uint32_t nbits_run, 
             bitbuffer *input, bitbuffer *output);
 
+void rl_decode_var(uint16_t bits_per_sample, 
+                    bitbuffer *input, bitbuffer *output);
 #endif

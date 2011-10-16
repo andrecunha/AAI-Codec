@@ -131,9 +131,7 @@ void bit_buffer_cpy(bitbuffer *output, bitbuffer *input, uint32_t size){
     uint8_t buf = 0;
     uint32_t i=0;
 
-    bdestroy(output);
-    binit(output, 1);
-    input->bits_offset = 0;
+    /*input->bits_offset = 0;*/
 
     for(i=0; i<size; i++){
         bread(input, &buf);

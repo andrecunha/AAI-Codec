@@ -19,7 +19,7 @@
  *  \param buffer
  *  \param lenght
  */
-void dt_encode(uint32_t *buffer, uint32_t lenght);
+uint32_t dt_encode(uint32_t *input, bitbuffer *out, uint32_t lenght, uint16_t bits_per_sample);
 
 
 
@@ -28,6 +28,8 @@ void dt_encode(uint32_t *buffer, uint32_t lenght);
  *  \param delta
  *  \param lenght
  */
-void dt_decode(uint32_t delta, uint32_t lenght);
+void dt_decode(bitbuffer *input, uint32_t maxbit, uint32_t *output, uint32_t length, uint16_t bits_per_sample);
+
+void dt_decode_int(int32_t *input, uint32_t *output,uint32_t length);
 
 #endif

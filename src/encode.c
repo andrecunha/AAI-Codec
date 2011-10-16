@@ -45,7 +45,7 @@ uint64_t *frequencies;
 /* Indicates where the final data is. */
 int final_data;
 
-uint32_t nbits_run, nbits_code;
+uint32_t nbits_run, nbits_code, max_bits;
 
 #define DATA_VECTOR 0
 #define OUTPUT_BUFFER 1
@@ -177,9 +177,26 @@ void enc_run_length(int previous, FILE *in_fp)
     final_data = OUTPUT_BUFFER;
 }
 
-void enc_delta()
+void enc_delta(int previous, FILE *in_fp)
 {
-    printf("Difference encoding...\n");
+
+        int curr_channel;
+        uint32_t channel_size = (input_file_header->subchunk2size)/(input_file_header->numChannels)/((input_file_header->bitsPerSample)/8);
+        printf("Delta encoding...\n");
+        switch (previous) {
+            case -1:
+                    {
+                        load_to_uint32(in_fp, input_file_header, &data_vector);
+
+                        output_buffer = malloc(input_file_header->numChannels*sizeof(bitbuffer));
+
+                         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) 
+                                dt_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), channel_size, input_file_header->bitsPerSample);
+                    }
+                    break;
+        }
+
+        final_data = OUTPUT_BUFFER;
 }
 
 int main (int argc, char* argv[])
@@ -253,27 +270,84 @@ int main (int argc, char* argv[])
 
     enc_prepare_input_file(in_fp);
 
-    if(first_enc == HUFFMAN)
-            enc_huffman(-1, in_fp);
-    else if(first_enc == DELTA)
-            enc_delta(-1);
-        else 
-            enc_run_length(-1, in_fp);
+    switch (first_enc) {
+            case HUFFMAN:
+                enc_huffman(-1, in_fp);
+                break;
+            case RUN_LENGTH:
+                enc_run_length(-1, in_fp);
+                break;
+            case DELTA:
+                enc_delta(-1, in_fp);
+    }
 
-    if(sec_enc == HUFFMAN)
-            enc_huffman(RUN_LENGTH, in_fp);
-    else if(sec_enc == DELTA)
-            enc_delta();
-        else if(sec_enc == RUN_LENGTH) 
-                enc_run_length(HUFFMAN, in_fp);
-    
-    if(third_enc == HUFFMAN)
-            enc_huffman(0, in_fp);
-    else if(third_enc == DELTA)
-            enc_delta();
-    else if(third_enc == RUN_LENGTH)
-            enc_run_length(-1, in_fp);
-   
+    switch (sec_enc) {
+                case HUFFMAN:
+                    switch(first_enc) {
+                            case RUN_LENGTH:
+                                    enc_huffman(RUN_LENGTH, in_fp);
+                                    break;
+                            case DELTA:
+                                    enc_huffman(DELTA, in_fp);
+                    }
+                    break;
+
+                case RUN_LENGTH:
+                    switch(first_enc) {
+                            case HUFFMAN:
+                                    enc_run_length(HUFFMAN, in_fp);
+                                    break;
+                            case DELTA:
+                                    enc_run_length(DELTA, in_fp);
+                    }
+
+                    break;
+                case DELTA:
+                    switch(first_enc) {
+                            case HUFFMAN:
+                                    enc_delta(HUFFMAN, in_fp);
+                                    break;
+                            case RUN_LENGTH:
+                                    enc_delta(RUN_LENGTH, in_fp);
+                    }
+                    break;
+
+     }
+
+    switch (third_enc) {
+                case HUFFMAN:
+                    switch(sec_enc) {
+                            case RUN_LENGTH:
+                                    enc_huffman(RUN_LENGTH, in_fp);
+                                    break;
+                            case DELTA:
+                                    enc_huffman(DELTA, in_fp);
+                    }
+                    break;
+
+                case RUN_LENGTH:
+                    switch(sec_enc) {
+                            case HUFFMAN:
+                                    enc_run_length(HUFFMAN, in_fp);
+                                    break;
+                            case DELTA:
+                                    enc_run_length(DELTA, in_fp);
+                    }
+
+                    break;
+                case DELTA:
+                    switch(sec_enc) {
+                            case HUFFMAN:
+                                    enc_delta(HUFFMAN, in_fp);
+                                    break;
+                            case RUN_LENGTH:
+                                    enc_delta(RUN_LENGTH, in_fp);
+                    }
+                    break;
+
+     }
+
+
     enc_prepare_output_file(out_fp);
 
     fclose(in_fp);

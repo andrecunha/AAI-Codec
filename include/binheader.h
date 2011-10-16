@@ -30,6 +30,9 @@ struct _binheader {
     uint8_t  thirdEncoding; /*<! The third encoding technique applied. */
     uint32_t hfFreqSize; /*<! The number of bits used to represent the frequency of each symbol. Used in the Huffman encoding. */
     uint32_t hfFreqLength; /*<! The number of different symbols in the frequency vector. Used in the Huffman encoding. */
+    uint32_t rlBitsRun; /*<! The number of bits used to store the run length. Used in the Run-length encoding. */
+    uint32_t rlBitsCode;
+    uint32_t dtBitsDelta;
 };
 
 /*! \var typedef struct _binheader binheader;

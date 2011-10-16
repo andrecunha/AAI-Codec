@@ -5,13 +5,15 @@
 #include <inttypes.h>
 #include <bitio.h>
 
-uint32_t dt_encode(int32_t *input, int32_t *output, uint32_t lenght)
+uint32_t dt_encode(uint32_t *input, bitbuffer *out, uint32_t lenght, uint16_t bits_per_sample)
 {
 
     int32_t i;
+    unsigned int maxbit;
     int32_t diff,res;
     int32_t max_diff = 0;
     int32_t min_diff = 0;
+    int32_t *output = calloc(lenght,sizeof(int32_t));
 
     output[0]=input[0];
 
@@ -32,17 +34,54 @@ uint32_t dt_encode(int32_t *input, int32_t *output, uint32_t lenght)
         res = max_diff;
         else res = min_diff;
 
-    return ceil(log(abs(res))/log(2));
+
+    maxbit = ceil(log(abs(res))/log(2));
+
+    bwritev(out, abs(output[0]),bits_per_sample);
+
+    for(i=1; i<lenght; i++){
+        if(output[i] >= 0)
+            bwritev(out, 1, 1);
+
+        else
+            bwritev(out, 0, 1);
+
+        bwritev(out,abs(output[i]), maxbit);
+    }
+
+    return maxbit;
 }
 
-
-/*Decode function. It will receive a delta parameter, and lenght information of the file that it will decde.*/
-void dt_decode(int32_t *input, int32_t *output,uint32_t lenght)
+/*Decode function. It will receive a delta parameter, and length information of the file that it will decde.*/
+void dt_decode_int(int32_t *input, uint32_t *output,uint32_t length)
 {
     uint32_t i;
 
     output[0] = input[0];
 
-    for(i=1; i < lenght; i++)
+    for(i=1; i < length; i++)
         output[i] = output[i-1]+input[i];
 }
+
+
+void dt_decode(bitbuffer *input, uint32_t maxbit, uint32_t *output, uint32_t length, uint16_t bits_per_sample){
+    uint32_t i, signal, diff;
+    int32_t *input_int = malloc(sizeof(int32_t)*length);
+
+    breadv(input, &output[0], bits_per_sample);
+    input_int[0] = (int32_t) output[0];
+
+    for (i=1; i<length; i++){
+        breadv(input, &signal, 1);
+        breadv(input, &diff, maxbit);
+        if(signal == 1)
+            input_int[i] = (int32_t) diff;
+        else
+            input_int[i] = (int32_t) -diff;
+
+    }
+
+    dt_decode_int(input_int, output, length);
+
+}
+

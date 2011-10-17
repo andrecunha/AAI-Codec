@@ -15,18 +15,6 @@ typedef int boolean;
 #define TRUE 1
 #define FALSE 0
 
-/* 
- * COISAS QUE TEM QUE IR NO CABEÇALHO:
- *
- *  -> Número de bits por amostra;
- *  -> Número de canais;
- *  -> Organização do arquivo (nCanais*bitbuffer ou nCanais*vetor_de_uint32_t)
- *  -> Número de amostras por segundo.
- *  -> Número de bytes nos dados.
- *  -> Primeira/segunda/terceira técnicas de compressão.
- *
- * */
-
 /* Global variables, a necessary evil. */
 unsigned int n_encodings = 0,
              first_enc = 0, 

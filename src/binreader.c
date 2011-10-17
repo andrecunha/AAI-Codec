@@ -21,7 +21,7 @@ uint8_t find_freq_size (uint64_t *frequencies, uint64_t length)
             return (uint8_t)24;
         else if(ret<33)
             return (uint8_t)32;
-        else if(ret<41);
+        else if(ret<41)
             return (uint8_t)40;
         else if(ret<49)
             return (uint8_t)48;

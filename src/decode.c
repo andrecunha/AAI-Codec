@@ -61,7 +61,7 @@ void dec_huffman(int previous, FILE *in_fp)
         }
 }
 
-void enc_run_length(int previous, FILE *in_fp)
+void dec_run_length(int previous, FILE *in_fp)
 {
     printf("Applying run-length decoding...\n");
 

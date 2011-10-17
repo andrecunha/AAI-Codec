@@ -266,7 +266,7 @@ int load_to_uint32(FILE *fp, wavheader *h, uint32_t ***output)
                                 case 32: read_4_bytes(fp, &_output[curr_channel][curr_position], h->endianness);
                                          break;
                                 default:
-                                        ERROR("Unsupported bit rate.")
+                                        ERROR("Unsupported bit rate.");
                                         exit(1);
                                         break;
                         }

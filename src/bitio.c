@@ -151,19 +151,19 @@ void breload(bitbuffer *b, uint32_t size, unsigned long n_bytes,
 
 uint32_t b_to_uint32(bitbuffer *b, uint32_t **output, uint8_t nbits, uint32_t offset)
 {
-    uint32_t tam = ceil((float)((b->n_bytes*8) - (8 - b->bits_last))/nbits), i;
+    uint32_t size = ceil((float)((b->n_bytes*8) - (8 - b->bits_last))/nbits), i;
     
-    *output = malloc(tam*sizeof(uint32_t));
+    *output = malloc(size*sizeof(uint32_t));
 
-    for (i=0; i<tam; i++){
+    for (i=0; i<size; i++){
         (*output)[i] = 0;
     }
 
-    for (i=offset; i<tam; i++){
+    for (i=offset; i<size; i++){
         breadv(b, (*output)+i, nbits);
     }
    
-    return tam; 
+    return size; 
 }
 
 void b_from_uint32(bitbuffer *b, uint32_t *input, 

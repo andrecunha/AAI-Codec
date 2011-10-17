@@ -26,4 +26,7 @@ src/test_out.txt
 src/vgcore*
 src/wav_test
 src/wavreader.o
+LEIA-ME.txt
+Projeto1.tar.bz2
+src/binreader.o
 

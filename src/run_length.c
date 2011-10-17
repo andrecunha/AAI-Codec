@@ -171,7 +171,7 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
             continue;
         /*Allocates memory to to_encode.*/
         /*Decreases input pointers.*/
-        size_to_encode = b_to_uint32(input, &to_encode, i);
+        size_to_encode = b_to_uint32(input, &to_encode, i, 0);
         
         /*Input needs to be reloaded, since b_to_uint32 uses breadv,
  * which changes the pointers.*/

@@ -28,11 +28,12 @@ struct _binheader {
     uint8_t  firstEncoding; /*<! The first encoding technique applied. */
     uint8_t  secondEncoding; /*<! The second encoding technique applied. */
     uint8_t  thirdEncoding; /*<! The third encoding technique applied. */
-    uint32_t hfFreqSize; /*<! The number of bits used to represent the frequency of each symbol. Used in the Huffman encoding. */
+    uint8_t hfFreqSize; /*<! The number of bits used to represent the frequency of each symbol. Used in the Huffman encoding. */
     uint32_t hfFreqLength; /*<! The number of different symbols in the frequency vector. Used in the Huffman encoding. */
     uint32_t rlBitsRun; /*<! The number of bits used to store the run length. Used in the Run-length encoding. */
     uint32_t rlBitsCode;
     uint32_t dtBitsDelta;
+    uint32_t *firsts;
 };
 
 /*! \var typedef struct _binheader binheader;
@@ -47,6 +48,10 @@ typedef struct _binheader binheader;
  *  \param f A file to get the header from.
  */
 int binh_get_header(binheader *wh, FILE *f);
+
+int binh_put_header(binheader *wh, FILE *f);
+
+uint32_t find_freq_size (uint64_t *frequencies, uint64_t length);
 
 int binh_make_wave_header(binheader *bh, wavheader *wh);
 

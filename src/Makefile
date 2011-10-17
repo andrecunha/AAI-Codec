@@ -33,6 +33,9 @@ hf_test: hf_test.c bitio.c priority_queue.c huffman.c
 huffman_test: huffman.c huffman_test.c bitio.c priority_queue.c wavreader.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o huffman_test huffman_test.c bitio.c priority_queue.c huffman.c wavreader.c
 
+delta_test: delta_test.c bitio.c delta.c
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o delta_test delta_test.c bitio.c delta.c
+
 ############################# FINAL BUILDS ############################
 
 bitio: bitio.c
@@ -44,7 +47,7 @@ priority_queue: priority_queue.c
 wavreader: wavreader.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o wavreader.o -c wavreader.c
 
-delta: delta.c
+delta: delta.c bitio
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o delta.o -c delta.c
 
 run_length: run_length.c 

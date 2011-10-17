@@ -131,7 +131,7 @@ int getHeader(wavheader *wh, FILE *f){
 
 int read_byte(FILE *fp, uint8_t *c){
     if(fread(c, 1, 1 ,fp)!=1){
-        ERROR("IO error at wavreader.read_byte")
+        ERROR("IO error at wavreader.read_byte");
         return 1;
     }
     return 0;
@@ -141,22 +141,22 @@ int read_4_bytes(FILE *fp, uint32_t *out, int endianness){
     uint8_t c[4];
 
     if(read_byte(fp, &c[0])==1){
-        ERROR("IO error at wavreader.read_4_bytes")
+        ERROR("IO error at wavreader.read_4_bytes");
         return 1;
     }
 
     if(read_byte(fp, &c[1])==1){
-        ERROR("IO error at wavreader.read_4_bytes")
+        ERROR("IO error at wavreader.read_4_bytes");
         return 1;
     }
 
     if(read_byte(fp, &c[2])==1){
-        ERROR("IO error at wavreader.read_4_bytes")
+        ERROR("IO error at wavreader.read_4_bytes");
         return 1;
     }
 
     if(read_byte(fp, &c[3])==1){
-        ERROR("IO error at wavreader.read_4_bytes")
+        ERROR("IO error at wavreader.read_4_bytes");
         return 1;
     }
 
@@ -181,15 +181,15 @@ int read_3_bytes(FILE *fp, uint32_t *out, int endianness){
     uint8_t c[4];
 
     if(read_byte(fp, &c[0])){
-        ERROR("IO error at wavreader.read_3_bytes")
+        ERROR("IO error at wavreader.read_3_bytes");
         return 1;
     }
     if(read_byte(fp, &c[1])){
-        ERROR("IO error at wavreader.read_3_bytes")
+        ERROR("IO error at wavreader.read_3_bytes");
         return 1;
     }
     if(read_byte(fp, &c[2])){
-        ERROR("IO error at wavreader.read_3_bytes")
+        ERROR("IO error at wavreader.read_3_bytes");
         return 1;
     }
     
@@ -211,11 +211,11 @@ int read_2_bytes(FILE *fp, uint16_t *out, int endianness){
     uint8_t c[2];
 
     if(read_byte(fp, &c[0])){
-        ERROR("IO error at wavreader.read_2_bytes")
+        ERROR("IO error at wavreader.read_2_bytes");
         return 1;
     }
     if(read_byte(fp, &c[1])){
-        ERROR("IO error at wavreader.read_2_bytes")
+        ERROR("IO error at wavreader.read_2_bytes");
         return 1;
     }
 

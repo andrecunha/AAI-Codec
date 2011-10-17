@@ -66,57 +66,57 @@ int binh_make_wave_header(binheader *bh, wavheader *wh, uint8_t first_enc, uint8
 int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *firsts, uint32_t *max_bits, uint32_t *nbits_run, uint32_t *nbits_code)
 {
        if(fwrite(&(wh->chunkSize), sizeof(uint32_t), 1, f) != 1) {
-               ERROR("Cannot write chunkSize to file.")
+               ERROR("Cannot write chunkSize to file.");
                exit(1);
        }
 
        if(fwrite(&(wh->subchunk1size), sizeof(uint32_t), 1, f) != 1) {
-               ERROR("Cannot write subchunk2size to file.")
+               ERROR("Cannot write subchunk2size to file.");
                exit(1);
        }
 
        if(fwrite(&(wh->numChannels), sizeof(uint16_t), 1, f) != 1) {
-               ERROR("Cannot write numChannels to file.")
+               ERROR("Cannot write numChannels to file.");
                exit(1);
        }
 
        if(fwrite(&(wh->sampleRate), sizeof(uint32_t), 1, f) != 1) {
-               ERROR("Cannot write sampleRate to file.")
+               ERROR("Cannot write sampleRate to file.");
                exit(1);
        }
 
        if(fwrite(&(wh->byteRate), sizeof(uint32_t), 1, f) != 1) {
-               ERROR("Cannot write byteRate to file.")
+               ERROR("Cannot write byteRate to file.");
                exit(1);
        }
 
        if(fwrite(&(wh->blockAlign), sizeof(uint16_t), 1, f) != 1) {
-               ERROR("Cannot write blockAlign to file.")
+               ERROR("Cannot write blockAlign to file.");
                exit(1);
        }
 
        if(fwrite(&(wh->bitsPerSample), sizeof(uint16_t), 1, f) != 1) {
-               ERROR("Cannot write bitsPerSample to file.")
+               ERROR("Cannot write bitsPerSample to file.");
                exit(1);
        }
 
        if(fwrite(&(wh->subchunk2size), sizeof(uint32_t), 1, f) != 1) {
-               ERROR("Cannot write subchunk2size to file.")
+               ERROR("Cannot write subchunk2size to file.");
                exit(1);
        }
 
        if(fwrite(&(wh->firstEncoding), sizeof(uint8_t), 1, f) != 1) {
-               ERROR("Cannot write firstEncoding to file.")
+               ERROR("Cannot write firstEncoding to file.");
                exit(1);
        }
 
        if(fwrite(&(wh->secondEncoding), sizeof(uint8_t), 1, f) != 1) {
-               ERROR("Cannot write secondEncoding to file.")
+               ERROR("Cannot write secondEncoding to file.");
                exit(1);
        }
 
        if(fwrite(&(wh->thirdEncoding), sizeof(uint8_t), 1, f) != 1) {
-               ERROR("Cannot write thirdEncoding to file.")
+               ERROR("Cannot write thirdEncoding to file.");
                exit(1);
        }
 
@@ -126,12 +126,12 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *fir
 
        if ((first_enc==HUFFMAN)||(sec_enc==HUFFMAN)||(third_enc==HUFFMAN)) {
             if(fwrite(&(wh->hfFreqSize), sizeof(uint8_t), 1, f) != 1) {
-                    ERROR("Cannot write hfFreqSize to file.")
+                    ERROR("Cannot write hfFreqSize to file.");
                     exit(1);
             }
 
             if(fwrite(&(wh->hfFreqLength), sizeof(uint32_t), 1, f) != 1) {
-                    ERROR("Cannot write hfFreqLength to file.")
+                    ERROR("Cannot write hfFreqLength to file.");
                     exit(1);
             }
 
@@ -145,7 +145,7 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *fir
                     curr_freq.freq64 = frequencies[i];
                         for (j=0; (j<wh->FreqSize)/8; j++)
                             if(fwrite(&curr_freq.freq[7-j], sizeof(uint8_t), 1, f) != 1) {
-                                ERROR("Cannot write frequency to file.")
+                                ERROR("Cannot write frequency to file.");
                                 exit(1);
                             }
                     }
@@ -155,12 +155,12 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *fir
        if ((first_enc==RUN_LENGTH)||(sec_enc==RUN_LENGTH)||(third_enc==RUN_LENGTH)) {
 
                 if(fwrite(&(wh->rlBitsRun), sizeof(uint32_t), 1, f) != 1) {
-                    ERROR("Cannot write rlBitsRun to file.")
+                    ERROR("Cannot write rlBitsRun to file.");
                     exit(1);
                 }
 
                 if(fwrite(&(wh->rlBitsCode), sizeof(uint32_t), 1, f) != 1) {
-                    ERROR("Cannot write rlBitsCode to file.")
+                    ERROR("Cannot write rlBitsCode to file.");
                     exit(1);
                 }
        }
@@ -169,7 +169,7 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *fir
                int i;
                for(i=0; i<wh->numChannels; i++) {
                     if(fwrite(, sizeof(uint32_t), 1, f) != 1) {
-                        ERROR("Cannot write rlBitsCode to file.")
+                        ERROR("Cannot write rlBitsCode to file.");
                         exit(1);
                     }
                }
@@ -180,57 +180,57 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *fir
 int binh_get_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t **firsts)
 {
        if(fread(&(wh->chunkSize), sizeof(uint32_t), 1, f) != 1) {
-               ERROR("Cannot read chunkSize from file.")
+               ERROR("Cannot read chunkSize from file.");
                exit(1);
        }
 
        if(fread(&(wh->subchunk1size), sizeof(uint32_t), 1, f) != 1) {
-               ERROR("Cannot read subchunk2size from file.")
+               ERROR("Cannot read subchunk2size from file.");
                exit(1);
        }
 
        if(fread(&(wh->numChannels), sizeof(uint16_t), 1, f) != 1) {
-               ERROR("Cannot read numChannels from file.")
+               ERROR("Cannot read numChannels from file.");
                exit(1);
        }
 
        if(fread(&(wh->sampleRate), sizeof(uint32_t), 1, f) != 1) {
-               ERROR("Cannot read sampleRate to file.")
+               ERROR("Cannot read sampleRate to file.");
                exit(1);
        }
 
        if(fread(&(wh->byteRate), sizeof(uint32_t), 1, f) != 1) {
-               ERROR("Cannot read byteRate from file.")
+               ERROR("Cannot read byteRate from file.");
                exit(1);
        }
 
        if(fread(&(wh->blockAlign), sizeof(uint16_t), 1, f) != 1) {
-               ERROR("Cannot read blockAlign from file.")
+               ERROR("Cannot read blockAlign from file.");
                exit(1);
        }
 
        if(fwrite(&(wh->bitsPerSample), sizeof(uint16_t), 1, f) != 1) {
-               ERROR("Cannot read bitsPerSample from file.")
+               ERROR("Cannot read bitsPerSample from file.");
                exit(1);
        }
 
        if(fwrite(&(wh->subchunk2size), sizeof(uint32_t), 1, f) != 1) {
-               ERROR("Cannot read subchunk2size from file.")
+               ERROR("Cannot read subchunk2size from file.");
                exit(1);
        }
 
        if(fread(&(wh->firstEncoding), sizeof(uint8_t), 1, f) != 1) {
-               ERROR("Cannot read firstEncoding from file.")
+               ERROR("Cannot read firstEncoding from file.");
                exit(1);
        }
 
        if(fread(&(wh->secondEncoding), sizeof(uint8_t), 1, f) != 1) {
-               ERROR("Cannot read secondEncoding from file.")
+               ERROR("Cannot read secondEncoding from file.");
                exit(1);
        }
 
        if(fread(&(wh->thirdEncoding), sizeof(uint8_t), 1, f) != 1) {
-               ERROR("Cannot read thirdEncoding from file.")
+               ERROR("Cannot read thirdEncoding from file.");
                exit(1);
        }
 
@@ -240,12 +240,12 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t **f
 
        if ((first_enc)||(sec_enc==HUFFMAN)||(third_enc==HUFFMAN)) {
             if(fread(&(wh->hfFreqSize), sizeof(uint8_t), 1, f) != 1) {
-                    ERROR("Cannot read hfFreqSize from file.")
+                    ERROR("Cannot read hfFreqSize from file.");
                     exit(1);
             }
 
             if(fread(&(wh->hfFreqLength), sizeof(uint32_t), 1, f) != 1) {
-                    ERROR("Cannot read hfFreqLength from file.")
+                    ERROR("Cannot read hfFreqLength from file.");
                     exit(1);
             }
 
@@ -268,7 +268,7 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t **f
        if ((first_enc==RUN_LENGTH)||(sec_enc==RUN_LENGTH)||(third_enc==RUN_LENGTH)) {
 
                 if(fread(&(wh->rlBitsRun), sizeof(uint32_t), 1, f) != 1) {
-                    ERROR("Cannot read rlBitsRun from file.")
+                    ERROR("Cannot read rlBitsRun from file.");
                     exit(1);
                 }
 

@@ -32,6 +32,8 @@ struct _binheader {
     uint8_t  firstEncoding; /*<! The first encoding technique applied. */
     uint8_t  secondEncoding; /*<! The second encoding technique applied. */
     uint8_t  thirdEncoding; /*<! The third encoding technique applied. */
+    uint32_t dtInputLength;
+
 };
 
 /*! \var typedef struct _binheader binheader;

@@ -47,8 +47,8 @@ priority_queue: priority_queue.c
 wavreader: wavreader.c
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o wavreader.o -c wavreader.c
 
-binheader: binheader.c
-	$(CC) $(CFLAGS) -I$(INCLUDE) -o binheader.o -c binheader.c
+binreader: binreader.c
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o binreader.o -c binreader.c
 
 delta: delta.c bitio
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o delta.o -c delta.c
@@ -59,9 +59,9 @@ run_length: run_length.c
 huffman: huffman.c bitio priority_queue
 	$(CC) $(CFLAGS) -I$(INCLUDE) -o huffman.o -c huffman.c
 
-encode: encode.c huffman run_length delta bitio wavreader binheader
-	$(CC) $(CFLAGS) -I$(INCLUDE) -o ../bin/encode encode.c huffman.o run_length.o delta.o bitio.o priority_queue.o wavreader.o binheader.o
+encode: encode.c huffman run_length delta bitio wavreader binreader
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o ../bin/encode encode.c huffman.o run_length.o delta.o bitio.o priority_queue.o wavreader.o binreader.o
 
-decode: decode.c huffman run_length delta bitio wavreader binheader
-	$(CC) $(CFLAGS) -I$(INCLUDE) -o ../bin/decode decode.c huffman.o run_length.o delta.o bitio.o priority_queue.o wavreader.o binheader.o
+decode: decode.c huffman run_length delta bitio wavreader binreader
+	$(CC) $(CFLAGS) -I$(INCLUDE) -o ../bin/decode decode.c huffman.o run_length.o delta.o bitio.o priority_queue.o wavreader.o binreader.o
 

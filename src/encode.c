@@ -5,14 +5,11 @@
 #include <math.h>
 #include <bitio.h>
 #include <wavreader.h>
+#include <binreader.h>
 #include <error_handler.h>
 #include <huffman.h>
 #include <delta.h>
 #include <run_length.h>
-
-#define HUFFMAN     1
-#define DELTA       2
-#define RUN_LENGTH  3
 
 typedef int boolean;
 #define TRUE 1
@@ -72,7 +69,7 @@ void enc_prepare_output_file (FILE *fp)
         binheader h;
 
         /*XXX: PAROU AQUI.*/
-        binh_make_wave_header(h, input_file_header, frequencies, uint32_t frequency_length, nbits_code, nbits_run, firsts);
+        /*binh_make_wave_header(h, input_file_header, frequencies, uint32_t frequency_length, nbits_code, nbits_run, firsts);*/
 
         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++)
                 bflush(&output_buffer[curr_channel], fp);

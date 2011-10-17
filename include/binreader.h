@@ -28,6 +28,7 @@ struct _binheader {
     uint16_t blockAlign;
     uint16_t bitsPerSample;
     uint32_t subchunk2size;
+    uint8_t  endianness;
     uint8_t  firstEncoding; /*<! The first encoding technique applied. */
     uint8_t  secondEncoding; /*<! The second encoding technique applied. */
     uint8_t  thirdEncoding; /*<! The third encoding technique applied. */
@@ -44,12 +45,12 @@ typedef struct _binheader binheader;
  *  \param wh The bin header to be initialized.
  *  \param f A file to get the header from.
  */
-int binh_get_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t **firsts);
+int binh_get_header(binheader *wh, FILE *f, uint64_t ***frequencies, uint32_t *frequency_length, uint32_t **firsts, uint32_t **max_bits, uint32_t **nbits_run, uint32_t **nbits_code);
 
-int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *firsts, uint32_t *max_bits, uint32_t *nbits_run, uint32_t *nbits_code);
+int binh_put_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t frequency_length, uint32_t *firsts, uint32_t *max_bits, uint32_t *nbits_run, uint32_t *nbits_code);
 
 uint8_t find_freq_size (uint64_t *frequencies, uint64_t length);
 
-int binh_make_wave_header(binheader *bh, wavheader *wh, uint8_t first_enc, uint8_t sec_enc, uint8_t third_enc, uint64_t *frequencies, uint32_t frequency_length, uint32_t rl_bits_code, uint32_t rl_bits_run);
+int binh_make_bin_header(binheader *bh, wavheader *wh, uint8_t first_enc, uint8_t sec_enc, uint8_t third_enc);
 
 #endif /* BIN_HEADER_H */

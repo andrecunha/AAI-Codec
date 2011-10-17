@@ -2,6 +2,7 @@
 #include <math.h>
 #include <error_handler.h>
 #include <wavreader.h>
+#include <string.h>
 
 uint8_t find_freq_size (uint64_t *frequencies, uint64_t length)
 {
@@ -36,7 +37,7 @@ uint8_t find_freq_size (uint64_t *frequencies, uint64_t length)
  
 }
 
-int binh_make_wave_header(binheader *bh, wavheader *wh, uint8_t first_enc, uint8_t sec_enc, uint8_t third_enc, uint64_t *frequencies, uint32_t frequency_length, uint32_t rl_bits_code, uint32_t rl_bits_run)
+int binh_make_bin_header(binheader *bh, wavheader *wh, uint8_t first_enc, uint8_t sec_enc, uint8_t third_enc)
 {
         bh->chunkSize = wh->chunkSize;
         bh->subchunk1size = wh->subchunk1size;
@@ -50,20 +51,15 @@ int binh_make_wave_header(binheader *bh, wavheader *wh, uint8_t first_enc, uint8
         bh->secondEncoding = sec_enc;
         bh->thirdEncoding = third_enc;
 
-        if ((first_enc==HUFFMAN)||(sec_enc==HUFFMAN)||(third_enc==HUFFMAN)) {
-                bh->hfFreqSize = find_freq_size(frequencies, frequency_length);
-                bh->hfFreqLength = frequency_length;
-        }
-        
-        if ((first_enc==RUN_LENGTH)||(sec_enc==RUN_LENGTH)||(third_enc==RUN_LENGTH)) {
-                bh->rlBitsCode = rl_bits_code;
-                bh->rlBitsRun = rl_bits_run;
-        }
+        if (wh->riff == 0x52494646)
+            bh->endianness = LITTLE_ENDIAN;
+        else if(wh->riff == 0x52494658)
+            bh->endianness = BIG_ENDIAN;
 
         return 0;
 }
 
-int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *firsts, uint32_t *max_bits, uint32_t *nbits_run, uint32_t *nbits_code)
+int binh_put_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t frequency_length, uint32_t *firsts, uint32_t *max_bits, uint32_t *nbits_run, uint32_t *nbits_code)
 {
        if(fwrite(&(wh->chunkSize), sizeof(uint32_t), 1, f) != 1) {
                ERROR("Cannot write chunkSize to file.");
@@ -105,6 +101,11 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *fir
                exit(1);
        }
 
+       if(fwrite(&(wh->endianness), sizeof(uint8_t), 1, f) != 1) {
+               ERROR("Cannot write endianness to file.");
+               exit(1);
+       }
+
        if(fwrite(&(wh->firstEncoding), sizeof(uint8_t), 1, f) != 1) {
                ERROR("Cannot write firstEncoding to file.");
                exit(1);
@@ -124,13 +125,21 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *fir
                sec_enc = wh->secondEncoding,
                third_enc = wh->thirdEncoding;
 
+       int curr_channel=0;
+
        if ((first_enc==HUFFMAN)||(sec_enc==HUFFMAN)||(third_enc==HUFFMAN)) {
-            if(fwrite(&(wh->hfFreqSize), sizeof(uint8_t), 1, f) != 1) {
-                    ERROR("Cannot write hfFreqSize to file.");
-                    exit(1);
+
+            uint8_t *freq_size = calloc(wh->numChannels, sizeof(uint8_t));
+            for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++){
+                    freq_size[curr_channel] = find_freq_size(frequencies[curr_channel],  frequency_length);
+                    if(fwrite(&(freq_size[curr_channel]), sizeof(uint8_t), 1, f) != 1) {
+                        ERROR("Cannot write freq_size to file.");
+                        exit(1);
+                    }
             }
 
-            if(fwrite(&(wh->hfFreqLength), sizeof(uint32_t), 1, f) != 1) {
+            
+            if(fwrite(&(frequency_length), sizeof(uint32_t), 1, f) != 1) {
                     ERROR("Cannot write hfFreqLength to file.");
                     exit(1);
             }
@@ -141,44 +150,51 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *fir
                 uint8_t freq8[8];
             } curr_freq;
             
-            for(i=0; i<wh->hfFreqLength; i++) {
-                    curr_freq.freq64 = frequencies[i];
-                        for (j=0; (j<wh->FreqSize)/8; j++)
-                            if(fwrite(&curr_freq.freq[7-j], sizeof(uint8_t), 1, f) != 1) {
-                                ERROR("Cannot write frequency to file.");
-                                exit(1);
-                            }
-                    }
-            }
+
+            for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++)
+                    for(i=0; i<frequency_length; i++) {
+                                curr_freq.freq64 = frequencies[curr_channel][i];
+                                for (j=0; (j<freq_size[curr_channel])/8; j++)
+                                    if(fwrite(&curr_freq.freq8[7-j], sizeof(uint8_t), 1, f) != 1) {
+                                        ERROR("Cannot write frequency to file.");
+                                        exit(1);
+                                    }
+                     }
+
+            free(freq_size);
        }
        
        if ((first_enc==RUN_LENGTH)||(sec_enc==RUN_LENGTH)||(third_enc==RUN_LENGTH)) {
 
-                if(fwrite(&(wh->rlBitsRun), sizeof(uint32_t), 1, f) != 1) {
-                    ERROR("Cannot write rlBitsRun to file.");
+            for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++) {
+
+                if(fwrite(&(nbits_run[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
+                    ERROR("Cannot write nbits_run to file.");
                     exit(1);
                 }
 
-                if(fwrite(&(wh->rlBitsCode), sizeof(uint32_t), 1, f) != 1) {
-                    ERROR("Cannot write rlBitsCode to file.");
+                if(fwrite(&(nbits_code[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
+                    ERROR("Cannot write nbits_code to file.");
                     exit(1);
                 }
+            }
        }
 
        if ((first_enc==DELTA)||(sec_enc==DELTA)||(third_enc==DELTA)) {
-               int i;
-               for(i=0; i<wh->numChannels; i++) {
-                    if(fwrite(, sizeof(uint32_t), 1, f) != 1) {
-                        ERROR("Cannot write rlBitsCode to file.");
+               for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++) {
+                    if(fwrite(&(max_bits[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
+                        ERROR("Cannot write max_bits to file.");
                         exit(1);
                     }
                }
        }
+
        return 0;
 }
 
-int binh_get_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t **firsts)
+int binh_get_header(binheader *wh, FILE *f, uint64_t ***frequencies, uint32_t *frequency_length, uint32_t **firsts, uint32_t **max_bits, uint32_t **nbits_run, uint32_t **nbits_code)
 {
+      
        if(fread(&(wh->chunkSize), sizeof(uint32_t), 1, f) != 1) {
                ERROR("Cannot read chunkSize from file.");
                exit(1);
@@ -195,7 +211,7 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t **f
        }
 
        if(fread(&(wh->sampleRate), sizeof(uint32_t), 1, f) != 1) {
-               ERROR("Cannot read sampleRate to file.");
+               ERROR("Cannot read sampleRate from file.");
                exit(1);
        }
 
@@ -209,16 +225,20 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t **f
                exit(1);
        }
 
-       if(fwrite(&(wh->bitsPerSample), sizeof(uint16_t), 1, f) != 1) {
+       if(fread(&(wh->bitsPerSample), sizeof(uint16_t), 1, f) != 1) {
                ERROR("Cannot read bitsPerSample from file.");
                exit(1);
        }
 
-       if(fwrite(&(wh->subchunk2size), sizeof(uint32_t), 1, f) != 1) {
+       if(fread(&(wh->subchunk2size), sizeof(uint32_t), 1, f) != 1) {
                ERROR("Cannot read subchunk2size from file.");
                exit(1);
        }
 
+       if(fread(&(wh->endianness), sizeof(uint8_t), 1, f) != 1) {
+               ERROR("Cannot read endianness from file.");
+               exit(1);
+       }
        if(fread(&(wh->firstEncoding), sizeof(uint8_t), 1, f) != 1) {
                ERROR("Cannot read firstEncoding from file.");
                exit(1);
@@ -238,50 +258,74 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t **f
                sec_enc = wh->secondEncoding,
                third_enc = wh->thirdEncoding;
 
-       if ((first_enc)||(sec_enc==HUFFMAN)||(third_enc==HUFFMAN)) {
-            if(fread(&(wh->hfFreqSize), sizeof(uint8_t), 1, f) != 1) {
-                    ERROR("Cannot read hfFreqSize from file.");
-                    exit(1);
+       int curr_channel=0;
+
+       uint8_t *freq_size;
+       if ((first_enc==HUFFMAN)||(sec_enc==HUFFMAN)||(third_enc==HUFFMAN)) {
+            
+            freq_size = calloc(wh->numChannels, sizeof(uint8_t));
+            for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++){
+                   if(fread(&(freq_size[curr_channel]), sizeof(uint8_t), 1, f) != 1) {
+                       ERROR("Cannot read freq_size from file.");
+                       exit(1);
+                   }
             }
 
-            if(fread(&(wh->hfFreqLength), sizeof(uint32_t), 1, f) != 1) {
+            
+            if(fread(frequency_length, sizeof(uint32_t), 1, f) != 1) {
                     ERROR("Cannot read hfFreqLength from file.");
                     exit(1);
             }
 
-            /*XXX PEDIR PARA ALGUÉM FAZER!!!*/
-            int i;
-            for(i=0; i<wh->hfFreqLength; i++) {
-                    switch(wh->hfFreqSize) {
-                            case 8:
-                                    break;
-                            case 16:
-                                    break;
-                            case 24:
-                                    break;
-                            case 32:
-                                    break;
-                    }
+            int i, j;
+            union frequency{
+                uint64_t freq64;
+                uint8_t freq8[8];
+            } curr_freq;
+            
+            *frequencies = calloc(wh->numChannels, sizeof(uint64_t *));
+
+            for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++){
+                    (*frequencies)[curr_channel] = calloc(*frequency_length, sizeof(uint64_t));
+                    for(i=0; i<(*frequency_length); i++) {
+                                memset(&curr_freq.freq64, 0, sizeof(uint64_t));
+                                for (j=0; j<(freq_size[curr_channel])/8; j++)
+                                    if(fread(&curr_freq.freq8[7-j], sizeof(uint8_t), 1, f) != 1) {
+                                        ERROR("Cannot read frequency from file.");
+                                        exit(1);
+                                    }
+                                (*frequencies)[curr_channel][i] = curr_freq.freq64;
+                     }
             }
+            free(freq_size);
        }
        
        if ((first_enc==RUN_LENGTH)||(sec_enc==RUN_LENGTH)||(third_enc==RUN_LENGTH)) {
 
-                if(fread(&(wh->rlBitsRun), sizeof(uint32_t), 1, f) != 1) {
-                    ERROR("Cannot read rlBitsRun from file.");
+            *nbits_run = calloc(wh->numChannels, sizeof(uint32_t));
+            *nbits_code = calloc(wh->numChannels, sizeof(uint32_t));
+
+            for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++) {
+
+                if(fread(&(nbits_run[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
+                    ERROR("Cannot read nbits_run from file.");
                     exit(1);
                 }
 
-                if(fread(&(wh->rlBitsCode), sizeof(uint32_t), 1, f) != 1) {
-                    ERROR("Cannot read rlBitsCode from file.")
+                if(fread(&(nbits_code[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
+                    ERROR("Cannot read nbits_code from file.");
                     exit(1);
                 }
+            }
        }
 
        if ((first_enc==DELTA)||(sec_enc==DELTA)||(third_enc==DELTA)) {
-               int i;
-               for(i=0; i<wh->numChannels; i++) {
-                       /*XXX: FAZER!!!*/
+               *max_bits = calloc(wh->numChannels, sizeof(uint32_t));
+               for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++) {
+                    if(fread(&(max_bits[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
+                        ERROR("Cannot read max_bits from file.");
+                        exit(1);
+                    }
                }
        }
 

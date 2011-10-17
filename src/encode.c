@@ -37,7 +37,9 @@ uint64_t **frequencies;
 uint32_t *nbits_run = NULL,
          *firsts = NULL,
          *max_bits = NULL,
-         *nbits_code = NULL;
+         *nbits_code = NULL,
+         frequency_length;
+uint8_t flag = 0;
 
 void enc_prepare_input_file(FILE *fp)
 {
@@ -48,6 +50,12 @@ void enc_prepare_input_file(FILE *fp)
         }
         printWavHeader(input_file_header);
         output_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
+        nbits_run = calloc(input_file_header->numChannels, sizeof(uint32_t));
+        nbits_code = calloc(input_file_header->numChannels, sizeof(uint32_t)); 
+        max_bits = calloc(input_file_header->numChannels, sizeof(uint32_t));
+        firsts = calloc(input_file_header->numChannels, sizeof(uint32_t));
+        frequencies = calloc(input_file_header->numChannels, sizeof(uint64_t *));
+        data_vector = calloc(input_file_header->numChannels, sizeof(uint32_t *));
 }
 
 void enc_prepare_output_file (FILE *fp)
@@ -57,36 +65,48 @@ void enc_prepare_output_file (FILE *fp)
         /* Writing the header. */
         binheader h;
 
-        /*TODO: Escrever cabeçalho....*/
+        binh_make_bin_header(&h, input_file_header, first_enc, sec_enc,third_enc);
 
-        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++)
+        binh_put_header(&h, fp, frequencies, frequency_length, firsts, max_bits, nbits_run, nbits_code);
+
+        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++){
                 bflush(&output_buffer[curr_channel], fp);
+                if((first_enc==HUFFMAN)||(sec_enc==HUFFMAN)||(third_enc==HUFFMAN))
+                    free(frequencies[curr_channel]);
+        }
 
-        /*TODO: Verificar essas desalocações malucas. */
+        /*XXX: Até aqui, é para funcionar.*/
+
+        /*TODO: Verificar essas desalocações malucas.*/
         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
                 if(data_buffer)
                     bdestroy(&data_buffer[curr_channel]);
                 bdestroy(&output_buffer[curr_channel]);
                 if(data_vector && data_vector[curr_channel])
                 {
-                        if (((n_encodings==1)&&(first_enc == DELTA)) || ((n_encodings==2)&&(sec_enc == DELTA)) || ((n_encodings==3)&&(third_enc == DELTA))){
+                        if(flag){
+                            free(data_vector[curr_channel]);
+                        }else if (((n_encodings==1)&&(first_enc == DELTA)) || ((n_encodings==2)&&(sec_enc == DELTA)) || ((n_encodings==3)&&(third_enc == DELTA))){
                                 printf("first_enc: %u sec_enc: %u third_enc: %u\n", first_enc, sec_enc, third_enc);
-                           free(--data_vector[curr_channel]);
+                                free(--data_vector[curr_channel]);
                         }
-                        else {
-                                printf("Sera que passou por aqui?\n");
+                        else if (((n_encodings==1)&&(first_enc == HUFFMAN)) || ((n_encodings==2)&&(sec_enc == HUFFMAN)) || ((n_encodings==3)&&(third_enc == HUFFMAN))){
+                           printf("Sera que passou por aqui?\n");
                            free(data_vector[curr_channel]);
                         }
                 }
         }
         
-        if(data_vector)
-            free(data_vector);
+        free(data_vector);
         if (data_buffer)
             free(data_buffer);
         free(output_buffer);
-        if (firsts)
-                free(firsts);
+        free(firsts);
+        free(max_bits);
+        free(nbits_code);
+        free(nbits_run);
+        free(frequencies);
+        free(input_file_header);
 }
 
 void enc_huffman(int previous, FILE *in_fp)
@@ -101,16 +121,16 @@ void enc_huffman(int previous, FILE *in_fp)
                         {       /* Huffman is the first encoding option. */
 
                                 /* Loads the file into data_vector. */
+                                free(data_vector);
                                 load_to_uint32(in_fp, input_file_header, &data_vector);
 
-                                frequencies = calloc(input_file_header->numChannels, sizeof(uint64_t *));
 
                                 for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
                                         /* Initialize the bitbuffer of the current channel. */
                                         binit(&output_buffer[curr_channel], input_file_header->subchunk2size/input_file_header->numChannels);
 
-                                        /* Initialize the frequency vector of the current channel. */
-                                        frequencies[curr_channel] = calloc(pow(2, input_file_header->bitsPerSample), sizeof(uint64_t));
+
+                                        frequency_length = pow(2,input_file_header->bitsPerSample);
 
                                         hf_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), &(frequencies[curr_channel]), channel_n_samples, pow(2,input_file_header->bitsPerSample));
                                 }
@@ -119,13 +139,6 @@ void enc_huffman(int previous, FILE *in_fp)
 
                 case RUN_LENGTH:
                         {
-                                if((first_enc == DELTA)||(sec_enc == DELTA)) {
-                                        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                                                free(--(data_vector[curr_channel]));
-                                        }
-                                        free(data_vector);
-                                }
-
                                 for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
                                         /* The size, in bits and blocks, of the run-length encoding output. */
                                         uint32_t output_size_bits = (output_buffer[curr_channel].n_bytes*8 - (8-output_buffer[curr_channel].bits_last)),
@@ -135,6 +148,9 @@ void enc_huffman(int previous, FILE *in_fp)
                                         b_to_uint32(&(output_buffer[curr_channel]), &(data_vector[curr_channel]), nbits_run[curr_channel] + nbits_code[curr_channel], 0);
                                         bdestroy(&(output_buffer[curr_channel]));
                                         binit(&output_buffer[curr_channel], input_file_header->subchunk2size/input_file_header->numChannels);
+
+                                        frequency_length = pow(2,nbits_run[curr_channel] + nbits_code[curr_channel]);
+
                                         hf_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), &(frequencies[curr_channel]), output_size_blocks , pow(2,nbits_run[curr_channel] + nbits_code[curr_channel]));
                                 }
                         }
@@ -145,9 +161,10 @@ void enc_huffman(int previous, FILE *in_fp)
                                 /*XXX: Torce para não dar problema aqui!!!*/
 
                                 for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                                                free(--(data_vector[curr_channel]));
+                                                if(!flag) 
+                                                        free(--(data_vector[curr_channel]));
+                                                else free(data_vector[curr_channel]);
                                 }
-                                free(data_vector);
 
                                 for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
                                         /* We encode the output of the delta encoding taking blocks of max_bits bits. */
@@ -155,6 +172,7 @@ void enc_huffman(int previous, FILE *in_fp)
                                         b_to_uint32(&(output_buffer[curr_channel]), &(data_vector[curr_channel]), max_bits[curr_channel], 0);
                                         bdestroy(&(output_buffer[curr_channel]));
                                         binit(&output_buffer[curr_channel], input_file_header->subchunk2size/input_file_header->numChannels);
+                                        frequency_length = pow(2, max_bits[curr_channel]);
                                         hf_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), &(frequencies[curr_channel]), block_size, pow(2, max_bits[curr_channel]));
 
                                 }
@@ -176,8 +194,6 @@ void enc_run_length(int previous, FILE *in_fp)
 
                             load_to_bitbuffer(in_fp, input_file_header, &data_buffer);
 
-                            output_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
-
                             for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
                                     binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
                                     rl_encode(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), input_file_header->bitsPerSample, &(nbits_run[curr_channel]), &(nbits_code[curr_channel]));
@@ -194,6 +210,13 @@ void enc_run_length(int previous, FILE *in_fp)
 
             case DELTA:
                     {
+                            for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+                                            if(!flag)
+                                                free(--(data_vector[curr_channel]));
+                                            else
+                                                free(data_vector[curr_channel]);
+                            }
+
                             data_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
 
                             for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
@@ -218,10 +241,8 @@ void enc_delta(int previous, FILE *in_fp)
         switch (previous) {
             case -1:
                     {       /* Delta encoding is the first tecnique applied. */
+                            free(data_vector);
                             load_to_uint32(in_fp, input_file_header, &data_vector);
-
-                            firsts = calloc(input_file_header->numChannels, sizeof(uint32_t));
-                            max_bits = calloc(input_file_header->numChannels, sizeof(uint32_t));
 
                             for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
                                     firsts[curr_channel] = data_vector[curr_channel][0];
@@ -235,13 +256,14 @@ void enc_delta(int previous, FILE *in_fp)
 
             case RUN_LENGTH:
                     {
-                            max_bits = calloc(input_file_header->numChannels, sizeof(uint32_t));
-                            firsts = malloc(input_file_header->numChannels*sizeof(uint32_t));
                             memset(firsts, 0, input_file_header->numChannels*sizeof(uint32_t));
+                            flag = 1;
 
                             for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
                                 uint32_t size = b_to_uint32(&(output_buffer[curr_channel]), &(data_vector[curr_channel]), nbits_code[curr_channel] + nbits_run[curr_channel], 0);
                                 bdestroy(&(output_buffer[curr_channel]));
+                                /*firsts[curr_channel] = data_vector[curr_channel][0];
+                                data_vector[curr_channel]++;*/
                                 binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
                                 max_bits[curr_channel] = dt_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), size, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
                             }
@@ -409,7 +431,6 @@ int main (int argc, char* argv[])
 
     fclose(in_fp);
     fclose(out_fp);
-    free(input_file_header);
     return 0;
 }
 

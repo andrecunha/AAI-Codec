@@ -63,7 +63,7 @@ int binh_make_wave_header(binheader *bh, wavheader *wh, uint8_t first_enc, uint8
         return 0;
 }
 
-int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *firsts)
+int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *firsts, uint32_t *max_bits, uint32_t *nbits_run, uint32_t *nbits_code)
 {
        if(fwrite(&(wh->chunkSize), sizeof(uint32_t), 1, f) != 1) {
                ERROR("Cannot write chunkSize to file.")
@@ -90,7 +90,7 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *fir
                exit(1);
        }
 
-       if(fwrite&(wh->blockAlign), sizeof(uint16_t), 1, f) != 1) {
+       if(fwrite(&(wh->blockAlign), sizeof(uint16_t), 1, f) != 1) {
                ERROR("Cannot write blockAlign to file.")
                exit(1);
        }
@@ -165,7 +165,6 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t *frequencies, uint32_t *fir
                 }
        }
 
-        /*XXX: TAVA AQUI!!*/
        if ((first_enc==DELTA)||(sec_enc==DELTA)||(third_enc==DELTA)) {
                int i;
                for(i=0; i<wh->numChannels; i++) {

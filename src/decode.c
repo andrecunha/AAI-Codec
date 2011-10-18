@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <binreader.h>
 #include <error_handler.h>
+#include <huffman.h>
+#include <delta.h>
+#include <run_length.h>
 
 /* Global variables, a necessary evil. */
 unsigned int n_encodings = 0,
@@ -34,25 +38,53 @@ int curr_channel;
 
 void dec_prepare_input_file(FILE *fp)
 {
+    printf("### MARK 0.\n");
+    printf("Tamanho da coisa: %lu.\n", sizeof(binheader));
     input_file_header = malloc(sizeof(binheader));
+    printf("### MARK 1.");
     binh_get_header(input_file_header, fp, &frequencies, &frequency_length, &firsts, &max_bits, &nbits_run, &nbits_code);
+    printf("### MARK 2.");
     first_enc = input_file_header->firstEncoding;
     sec_enc = input_file_header->secondEncoding;
     third_enc = input_file_header->thirdEncoding;
+    printf("### MARK 3.");
 
     output_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
+    printf("### MARK 4.");
 
     output_vector = calloc(input_file_header->numChannels, sizeof(uint32_t *));
+    printf("### MARK 5.");
 
-    memset(output_vector, NULL, input_file_header->numChannels*sizeof(uint32_t *));
+    memset(output_vector, 0, input_file_header->numChannels*sizeof(uint32_t *));
+    printf("### MARK 6.");
+
+    data_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
+    printf("### MARK 7.");
+
+    data_vector = calloc(input_file_header->numChannels, sizeof(uint32_t *));
+    printf("### MARK 8.");
 
     for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++)
             bget(&(data_buffer[curr_channel]), fp);
+
+    printf("### Carregou o arquivo.");
 }
 
 void dec_prepare_output_file (FILE *fp)
 {
-    free(input_file_header);
+        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+                if(output_vector[curr_channel])
+                        free(output_vector[curr_channel]);
+                if(data_vector[curr_channel])
+                        free(data_vector[curr_channel]);
+                bdestroy(&output_buffer[curr_channel]);
+                bdestroy(&data_buffer[curr_channel]);
+        }
+        free(data_buffer);
+        free(data_vector);
+        free(output_buffer);
+        free(output_vector);
+        free(input_file_header);
 }
 
 void dec_huffman(FILE *in_fp)
@@ -71,30 +103,62 @@ void dec_huffman(FILE *in_fp)
                 output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
 
                 hf_decode (&(data_buffer[curr_channel]), frequencies[curr_channel], output_vector[curr_channel], frequency_length);
+
+                printf("Solta o print ai, coisa!\n");
+                bprint(&(data_buffer[curr_channel]));
         }
 }
 
 void dec_run_length(FILE *in_fp)
 {
-    printf("Applying run-length decoding...\n");
+        printf("Applying run-length decoding...\n");
+
+        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+            if(sec_enc==RUN_LENGTH){ 
+                /* Therefore, the first one was surely delta encoding. */
+                
+                /*XXX: Precisamos passar os dados do data_vector para o data_buffer. */
+                rl_decode(max_bits[curr_channel], nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
+            }else{
+                /* Therefore, this is the first one. */
+                rl_decode(input_file_header->bitsPerSample, nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
+            }
+        }
+
 }
 
-void dec_delta(int previous, FILE *in_fp)
+void dec_delta(FILE *in_fp)
 {
-
         printf("Delta decoding...\n");
+        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+                if(output_vector[curr_channel])
+                        free(output_vector[curr_channel]);
+
+                uint32_t output_length = (data_buffer[curr_channel].n_bytes*8 - (8-data_buffer[curr_channel].bits_last))/max_bits[curr_channel];
+
+                output_vector = calloc(output_length, sizeof(uint32_t));
+
+                if(first_enc==DELTA)
+                        dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, firsts[curr_channel]);
+                else
+                        /* Here, the previous encoding can only be run-length. */
+                        dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
+        }
 }
 
 int main(int argc, char *argv[])
 {
     FILE *in_fp, *out_fp;
-
         
+    printf("### MARK -2.");
+
     if((in_fp = fopen(argv[1], "rb"))==NULL){
         IO_OPEN_ERROR;
         return 1;
     }
     
+    printf("### MARK -1.");
+
     if((out_fp = fopen(argv[2], "wb+"))==NULL){
         IO_OPEN_ERROR;
         return 1;
@@ -104,42 +168,54 @@ int main(int argc, char *argv[])
 
     dec_prepare_input_file(in_fp);
 
-    switch (input_file_header.thirdEncoding){
+    printf("HUFFMAN: %d\n", HUFFMAN);
+    printf("RUN_LENGTH: %d\n", RUN_LENGTH);
+    printf("DELTA: %d\n", DELTA);
+    fflush(stdout);
+
+    switch (third_enc){
             case HUFFMAN:
-                    dec_huffman();
+                    dec_huffman(in_fp);
                     break;
             case RUN_LENGTH:
-                    dec_length();
+                    dec_run_length(in_fp);
                     break;
             case DELTA: 
-                    dec_delta();
+                    dec_delta(in_fp);
+            default:
+                    break;
     }
 
-    switch(input_file_header.secondEncoding){
+    switch(sec_enc){
             case HUFFMAN:
-                    dec_huffman();
+                    dec_huffman(in_fp);
                     break;
             case RUN_LENGTH:
-                    dec_length();
+                    dec_run_length(in_fp);
                     break;
             case DELTA: 
-                    dec_delta();
-            
+                    dec_delta(in_fp);
+            default:
+                    break;
     }
 
-    switch(input_file_header.firstEncoding){
+    switch(first_enc){
             case HUFFMAN:
-                    dec_huffman();
+                    {
+                    printf("Eu estou chamando o Huffmanzinho querido.\n");
+                    dec_huffman(in_fp);
+                    }
                     break;
             case RUN_LENGTH:
-                    dec_length();
+                    dec_run_length(in_fp);
                     break;
             case DELTA: 
-                    dec_delta();
-            
+                    dec_delta(in_fp);
+            default:
+                    break;
     }
 
-    enc_prepare_output_file(out_fp);
+    dec_prepare_output_file(out_fp);
 
     fclose(in_fp);
     fclose(out_fp);

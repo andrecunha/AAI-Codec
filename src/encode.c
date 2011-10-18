@@ -129,9 +129,8 @@ void enc_huffman(int previous, FILE *in_fp)
                                         /* Initialize the bitbuffer of the current channel. */
                                         binit(&output_buffer[curr_channel], input_file_header->subchunk2size/input_file_header->numChannels);
 
-
                                         frequency_length = pow(2,input_file_header->bitsPerSample);
-
+                                        
                                         hf_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), &(frequencies[curr_channel]), channel_n_samples, pow(2,input_file_header->bitsPerSample));
                                 }
                         }

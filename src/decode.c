@@ -32,42 +32,42 @@ uint32_t *nbits_run = NULL,
          *firsts = NULL,
          *max_bits = NULL,
          *nbits_code = NULL,
-         frequency_length;
+         frequency_length = 0;
 
 int curr_channel;
 
 void dec_prepare_input_file(FILE *fp)
 {
-    printf("### MARK 0.\n");
-    printf("Tamanho da coisa: %lu.\n", sizeof(binheader));
+    printf("Preparing input file...\n");
+
     input_file_header = malloc(sizeof(binheader));
-    printf("### MARK 1.");
+
+    printf("Getting header...\n");
+
     binh_get_header(input_file_header, fp, &frequencies, &frequency_length, &firsts, &max_bits, &nbits_run, &nbits_code);
-    printf("### MARK 2.");
+
     first_enc = input_file_header->firstEncoding;
     sec_enc = input_file_header->secondEncoding;
     third_enc = input_file_header->thirdEncoding;
-    printf("### MARK 3.");
 
     output_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
-    printf("### MARK 4.");
 
     output_vector = calloc(input_file_header->numChannels, sizeof(uint32_t *));
-    printf("### MARK 5.");
 
-    memset(output_vector, 0, input_file_header->numChannels*sizeof(uint32_t *));
-    printf("### MARK 6.");
+    /* TODO: is this right???   
+        memset(output_vector, 0, input_file_header->numChannels*sizeof(uint32_t *));
+     */
 
     data_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
-    printf("### MARK 7.");
 
     data_vector = calloc(input_file_header->numChannels, sizeof(uint32_t *));
-    printf("### MARK 8.");
 
-    for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++)
-            bget(&(data_buffer[curr_channel]), fp);
-
-    printf("### Carregou o arquivo.");
+    for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++){
+           printf("Reading data buffer");
+           if( bget(&(data_buffer[curr_channel]), fp)){
+                ERROR("Couldn't read bit buffer from input file");
+            }
+     }
 }
 
 void dec_prepare_output_file (FILE *fp)
@@ -79,7 +79,11 @@ void dec_prepare_output_file (FILE *fp)
                         free(data_vector[curr_channel]);
                 bdestroy(&output_buffer[curr_channel]);
                 bdestroy(&data_buffer[curr_channel]);
+                if(frequencies[curr_channel])
+                    free(frequencies[curr_channel]);
         }
+        if(frequencies)
+            free(frequencies);
         free(data_buffer);
         free(data_vector);
         free(output_buffer);
@@ -103,9 +107,11 @@ void dec_huffman(FILE *in_fp)
                 output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
 
                 hf_decode (&(data_buffer[curr_channel]), frequencies[curr_channel], output_vector[curr_channel], frequency_length);
-
-                printf("Solta o print ai, coisa!\n");
-                bprint(&(data_buffer[curr_channel]));
+    bdestroy(&data_buffer[curr_channel]);
+    binit(&data_buffer[curr_channel], input_file_header->subchunk2size);
+     b_from_uint32(&data_buffer[curr_channel], output_vector[curr_channel], 
+    output_length, 8,  0);
+    bprint(&data_buffer[curr_channel]);
         }
 }
 
@@ -150,15 +156,11 @@ int main(int argc, char *argv[])
 {
     FILE *in_fp, *out_fp;
         
-    printf("### MARK -2.");
-
     if((in_fp = fopen(argv[1], "rb"))==NULL){
         IO_OPEN_ERROR;
         return 1;
     }
     
-    printf("### MARK -1.");
-
     if((out_fp = fopen(argv[2], "wb+"))==NULL){
         IO_OPEN_ERROR;
         return 1;
@@ -167,11 +169,6 @@ int main(int argc, char *argv[])
     printf("Starting decoding process...\n");
 
     dec_prepare_input_file(in_fp);
-
-    printf("HUFFMAN: %d\n", HUFFMAN);
-    printf("RUN_LENGTH: %d\n", RUN_LENGTH);
-    printf("DELTA: %d\n", DELTA);
-    fflush(stdout);
 
     switch (third_enc){
             case HUFFMAN:
@@ -202,7 +199,6 @@ int main(int argc, char *argv[])
     switch(first_enc){
             case HUFFMAN:
                     {
-                    printf("Eu estou chamando o Huffmanzinho querido.\n");
                     dec_huffman(in_fp);
                     }
                     break;

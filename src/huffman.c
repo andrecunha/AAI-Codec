@@ -139,7 +139,6 @@ void hf_decode (bitbuffer *input, uint64_t *frequencies, uint32_t *output, uint3
 	hf_tree_node *root, *curr_node;
 	hf_build_tree(&root, frequencies, frequency_length);
 	curr_node = root;
-
 	unsigned long i_output=0;
 	uint8_t *b = malloc(1);
 	/* While there is more symbols to read. */

@@ -134,6 +134,7 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t fre
             uint8_t *freq_size = calloc(wh->numChannels, sizeof(uint8_t));
             for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++){
                     freq_size[curr_channel] = find_freq_size(frequencies[curr_channel],  frequency_length);
+
                     if(fwrite(&(freq_size[curr_channel]), sizeof(uint8_t), 1, f) != 1) {
                         ERROR("Cannot write freq_size to file.");
                         exit(1);
@@ -154,14 +155,20 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t fre
             
 
             for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++)
-                    for(i=0; i<frequency_length; i++) {
-                                curr_freq.freq64 = frequencies[curr_channel][i];
-                                for (j=0; (j<freq_size[curr_channel])/8; j++)
-                                    if(fwrite(&curr_freq.freq8[7-j], sizeof(uint8_t), 1, f) != 1) {
-                                        ERROR("Cannot write frequency to file.");
-                                        exit(1);
-                                    }
-                     }
+               for(i=0; i<frequency_length; i++) {
+                   curr_freq.freq64 = frequencies[curr_channel][i];
+                   /*for (j=0; j<(freq_size[curr_channel]/8); j++)
+                       if(fwrite(&curr_freq.freq8[7-j], sizeof(uint8_t), 1, f) != 1) {
+                           ERROR("Cannot write frequency to file.");
+                           exit(1);
+                       }*/
+                       /*XXX changed*/
+                   if(fwrite(&curr_freq.freq64, sizeof(uint64_t), 1, f)!=1 ){
+                       ERROR("Cannot write frequency to file.");
+                       exit(1);
+                   
+                   }
+                }
 
             free(freq_size);
        }
@@ -243,6 +250,7 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t ***frequencies, uint32_t *f
        }
 
 
+    printf("chunkSize: %"PRIu32"\n", wh->chunkSize);
     printf("subchunk1size: %"PRIu32"\n", wh->subchunk1size);
     printf("numChannels: %"PRIu16"\n", wh->numChannels);
     printf("sampleRate: %"PRIu32"\n", wh->sampleRate);
@@ -251,7 +259,6 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t ***frequencies, uint32_t *f
     printf("bitsPerSample: %"PRIu16"\n", wh->bitsPerSample);
     printf("endianness: %s\n", wh->endianness==LITTLE_ENDIAN?"LITTLE":"BIG");
     printf("subchunk2size: %"PRIu32"\n", wh->subchunk2size);
-    printf("chunkSize: %"PRIu32"\n", wh->chunkSize);
 
 
        if(fread(&(wh->firstEncoding), sizeof(uint8_t), 1, f) != 1) {
@@ -274,60 +281,61 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t ***frequencies, uint32_t *f
                third_enc = wh->thirdEncoding;
 
 
-    printf("### First: %"PRIu8".\n", first_enc);
-    printf("### Second:  %"PRIu8".\n", sec_enc);
-    printf("### Third: %"PRIu8".\n", third_enc);
+       printf("### First: %"PRIu8".\n", first_enc);
+       printf("### Second:  %"PRIu8".\n", sec_enc);
+       printf("### Third: %"PRIu8".\n", third_enc);
 
        int curr_channel=0;
-
-       printf("### MARK 10.\n");
        uint8_t *freq_size;
+
        if ((first_enc==HUFFMAN)||(sec_enc==HUFFMAN)||(third_enc==HUFFMAN)) {
-            
             freq_size = calloc(wh->numChannels, sizeof(uint8_t));
             for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++){
                    if(fread(&(freq_size[curr_channel]), sizeof(uint8_t), 1, f) != 1) {
                        ERROR("Cannot read freq_size from file.");
                        exit(1);
                    }
+                    printf("Frequency size[%d] %"PRIu8"\n", curr_channel, freq_size[curr_channel]);
             }
-
             
             if(fread(frequency_length, sizeof(uint32_t), 1, f) != 1) {
                     ERROR("Cannot read hfFreqLength from file.");
                     exit(1);
             }
 
+            printf("Frequency length: %"PRIu32"\n", *frequency_length);
+
             int i, j;
+
             union frequency{
                 uint64_t freq64;
                 uint8_t freq8[8];
             } curr_freq;
-            
-    printf("### MARK 11.\n");
+
             *frequencies = calloc(wh->numChannels, sizeof(uint64_t *));
+
+            printf("Reading frequencies...\n");
 
             for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++){
 
-    printf("### MARK 12.\n");
                     (*frequencies)[curr_channel] = calloc(*frequency_length, sizeof(uint64_t));
-    printf("### MARK 12,1.\n");
                     for(i=0; i<(*frequency_length); i++) {
-
-    printf("### MARK 12,2.\n");
                                 memset(&curr_freq.freq64, 0, sizeof(uint64_t));
-                                for (j=0; j<(freq_size[curr_channel])/8; j++)
+/*                                for (j=0; j<(freq_size[curr_channel]/8); j++)
                                     if(fread(&curr_freq.freq8[7-j], sizeof(uint8_t), 1, f) != 1) {
                                         ERROR("Cannot read frequency from file.");
                                         exit(1);
-                                    }
-                                (*frequencies)[curr_channel][i] = curr_freq.freq64;
+                                    }*/
+                          if(fread(&curr_freq.freq64,sizeof(uint64_t), 1, f)!=1){
+                                        ERROR("Cannot read frequency from file.");
+                                        exit(1);
+                        }
+                               (*frequencies)[curr_channel][i] = curr_freq.freq64;
                      }
             }
             free(freq_size);
        }
-       
-    printf("### MARK 12,3.\n");
+      /* 
        if ((first_enc==RUN_LENGTH)||(sec_enc==RUN_LENGTH)||(third_enc==RUN_LENGTH)) {
 
     printf("### MARK 13.\n");
@@ -359,9 +367,7 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t ***frequencies, uint32_t *f
                     }
                }
        }
-
-
-    printf("### MARK infinito.\n");
+*/
        return 0;
 }
 

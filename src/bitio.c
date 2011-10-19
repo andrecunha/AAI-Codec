@@ -121,9 +121,11 @@ int bflush(bitbuffer *b, FILE *f)
 	if(fwrite(&b->n_bytes, sizeof(unsigned long), 1, f)!=1) return 1;
 	if(fwrite(&b->bits_last, sizeof(unsigned int), 1, f)!=1) return 1;
 
-	if (fwrite(b->original_data, sizeof(uint8_t), b->n_bytes, f) != b->n_bytes)
+	if (fwrite(b->original_data, sizeof(uint8_t), b->n_bytes, f) != b->n_bytes){
 		return 1;
+    }
 
+    printf("bytes: %lu, last: %u\n", b->n_bytes, b->bits_last);
 	return 0;
 }
 
@@ -184,11 +186,15 @@ int bget(bitbuffer *b, FILE *f)
     b->bits_offset = 0;
 	b->data = b->original_data = malloc(b->size);
 
+    printf("bytes: %lu, last: %u\n", b->n_bytes, b->bits_last);
+
 	if (b->data) memset(b->data, 0, b->size);
 	else return 1;
-	
-	if (fread(b->data, sizeof(uint8_t), b->size, f) != b->size)
-		return 1;
+    long unsigned read;	
+	if ((read=fread(b->data, sizeof(uint8_t), b->size, f)) != b->size){
+        printf("aqui!!! READ: %lu, size: %"PRIu32"\n", read, b->size);
+		    return 1;
+    }
 
 	return 0;
 }

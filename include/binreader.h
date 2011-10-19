@@ -22,16 +22,22 @@
 struct _binheader {
     uint32_t chunkSize;
     uint32_t subchunk1size;
+    
     uint16_t numChannels;
+    
     uint32_t sampleRate;
     uint32_t byteRate;
+
     uint16_t blockAlign;
     uint16_t bitsPerSample;
+
     uint32_t subchunk2size;
+
     uint8_t  endianness;
     uint8_t  firstEncoding; /*<! The first encoding technique applied. */
     uint8_t  secondEncoding; /*<! The second encoding technique applied. */
     uint8_t  thirdEncoding; /*<! The third encoding technique applied. */
+
     uint32_t dtInputLength;
 
 };

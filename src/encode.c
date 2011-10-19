@@ -68,14 +68,14 @@ void enc_prepare_output_file (FILE *fp)
         binh_make_bin_header(&h, input_file_header, first_enc, sec_enc,third_enc);
 
         binh_put_header(&h, fp, frequencies, frequency_length, firsts, max_bits, nbits_run, nbits_code);
+        /*if(fwrite("BUFFER", sizeof("BUFFER"), 1, fp)!=1)
+            ERROR("BUFFER");*/
 
         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++){
                 bflush(&output_buffer[curr_channel], fp);
                 if((first_enc==HUFFMAN)||(sec_enc==HUFFMAN)||(third_enc==HUFFMAN))
                     free(frequencies[curr_channel]);
         }
-
-        /*XXX: Até aqui, é para funcionar.*/
 
         /*TODO: Verificar essas desalocações malucas.*/
         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
@@ -87,11 +87,9 @@ void enc_prepare_output_file (FILE *fp)
                         if(flag){
                             free(data_vector[curr_channel]);
                         }else if (((n_encodings==1)&&(first_enc == DELTA)) || ((n_encodings==2)&&(sec_enc == DELTA)) || ((n_encodings==3)&&(third_enc == DELTA))){
-                                printf("first_enc: %u sec_enc: %u third_enc: %u\n", first_enc, sec_enc, third_enc);
                                 free(--data_vector[curr_channel]);
                         }
                         else if (((n_encodings==1)&&(first_enc == HUFFMAN)) || ((n_encodings==2)&&(sec_enc == HUFFMAN)) || ((n_encodings==3)&&(third_enc == HUFFMAN))){
-                           printf("Sera que passou por aqui?\n");
                            free(data_vector[curr_channel]);
                         }
                 }

@@ -45,7 +45,7 @@ void dec_prepare_input_file(FILE *fp)
     printf("Getting header...\n");
 
     binh_get_header(input_file_header, fp, &frequencies, &frequency_length, &firsts, &max_bits, &nbits_run, &nbits_code);
-
+    printf("CODE: %"PRIu32"\n", nbits_code[0]);
     first_enc = input_file_header->firstEncoding;
     sec_enc = input_file_header->secondEncoding;
     third_enc = input_file_header->thirdEncoding;
@@ -73,15 +73,20 @@ void dec_prepare_input_file(FILE *fp)
 void dec_prepare_output_file (FILE *fp)
 {
         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+                bprint(&output_buffer[curr_channel]);
                 if(output_vector[curr_channel])
                         free(output_vector[curr_channel]);
                 if(data_vector[curr_channel])
                         free(data_vector[curr_channel]);
                 bdestroy(&output_buffer[curr_channel]);
                 bdestroy(&data_buffer[curr_channel]);
-                if(frequencies[curr_channel])
+                if(frequencies && frequencies[curr_channel])
                     free(frequencies[curr_channel]);
         }
+        if(nbits_run)
+            free(nbits_run);
+        if(nbits_code)
+            free(nbits_code);
         if(frequencies)
             free(frequencies);
         free(data_buffer);
@@ -127,6 +132,7 @@ void dec_run_length(FILE *in_fp)
                 rl_decode(max_bits[curr_channel], nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
             }else{
                 /* Therefore, this is the first one. */
+                binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
                 rl_decode(input_file_header->bitsPerSample, nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
             }
         }
@@ -203,7 +209,7 @@ int main(int argc, char *argv[])
                     }
                     break;
             case RUN_LENGTH:
-                    dec_run_length(in_fp);
+                   dec_run_length(in_fp);
                     break;
             case DELTA: 
                     dec_delta(in_fp);

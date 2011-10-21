@@ -181,11 +181,13 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t fre
                     ERROR("Cannot write nbits_run to file.");
                     exit(1);
                 }
+                printf("Nbits_run %"PRIu32"\n", nbits_run[curr_channel]);
 
                 if(fwrite(&(nbits_code[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
                     ERROR("Cannot write nbits_code to file.");
                     exit(1);
                 }
+                printf("Nbits_code %"PRIu32"\n", nbits_code[curr_channel]);
             }
        }
 
@@ -335,30 +337,30 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t ***frequencies, uint32_t *f
             }
             free(freq_size);
        }
-      /* 
+       
        if ((first_enc==RUN_LENGTH)||(sec_enc==RUN_LENGTH)||(third_enc==RUN_LENGTH)) {
 
-    printf("### MARK 13.\n");
             *nbits_run = calloc(wh->numChannels, sizeof(uint32_t));
             *nbits_code = calloc(wh->numChannels, sizeof(uint32_t));
 
             for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++) {
 
-                if(fread(&(nbits_run[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
+                if(fread((nbits_run)[curr_channel], sizeof(uint32_t), 1, f) != 1) {
                     ERROR("Cannot read nbits_run from file.");
                     exit(1);
                 }
+                printf("Nbits_run %"PRIu32"\n", *nbits_run[curr_channel]);
 
-                if(fread(&(nbits_code[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
+                if(fread((nbits_code)[curr_channel], sizeof(uint32_t), 1, f) != 1) {
                     ERROR("Cannot read nbits_code from file.");
                     exit(1);
                 }
+                printf("Nbits_code %"PRIu32"\n", *nbits_code[curr_channel]);
             }
        }
 
        if ((first_enc==DELTA)||(sec_enc==DELTA)||(third_enc==DELTA)) {
 
-    printf("### MARK 14.\n");
                *max_bits = calloc(wh->numChannels, sizeof(uint32_t));
                for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++) {
                     if(fread(&(max_bits[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
@@ -367,7 +369,7 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t ***frequencies, uint32_t *f
                     }
                }
        }
-*/
+
        return 0;
 }
 

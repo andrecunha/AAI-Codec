@@ -253,16 +253,16 @@ void enc_delta(int previous, FILE *in_fp)
 
             case RUN_LENGTH:
                     {
-                            memset(firsts, 0, input_file_header->numChannels*sizeof(uint32_t));
-                            flag = 1;
+                            /*memset(firsts, 0, input_file_header->numChannels*sizeof(uint32_t));
+                            flag = 1;*/
 
                             for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
                                 uint32_t size = b_to_uint32(&(output_buffer[curr_channel]), &(data_vector[curr_channel]), nbits_code[curr_channel] + nbits_run[curr_channel], 0);
                                 bdestroy(&(output_buffer[curr_channel]));
-                                /*firsts[curr_channel] = data_vector[curr_channel][0];
-                                data_vector[curr_channel]++;*/
+                                firsts[curr_channel] = data_vector[curr_channel][0];
+                                data_vector[curr_channel]++;
                                 binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
-                                max_bits[curr_channel] = dt_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), size, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
+                                max_bits[curr_channel] = dt_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), size-1, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
                             }
 
                     }

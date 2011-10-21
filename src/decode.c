@@ -71,8 +71,10 @@ void dec_prepare_input_file(FILE *fp)
 
 void dec_prepare_output_file (FILE *fp)
 {
-        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                /*bprint(&output_buffer[curr_channel]);*/
+
+                for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+                
+                bprint(&output_buffer[curr_channel]);
                 if(output_vector[curr_channel])
                         free(output_vector[curr_channel]);
                 if(data_vector[curr_channel])
@@ -149,7 +151,7 @@ void dec_delta(FILE *in_fp)
                 if(output_vector[curr_channel])
                         free(output_vector[curr_channel]);
 
-                uint32_t output_length = (data_buffer[curr_channel].n_bytes*8 - (8-data_buffer[curr_channel].bits_last))/max_bits[curr_channel];
+                uint32_t output_length = ((data_buffer[curr_channel].n_bytes*8 - (8-data_buffer[curr_channel].bits_last))/(max_bits[curr_channel]+1)) + 1;
 
                 output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
 
@@ -158,6 +160,7 @@ void dec_delta(FILE *in_fp)
                 else
                         /* Here, the previous encoding can only be run-length. */
                         dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
+                b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, 0);
         }
 }
 

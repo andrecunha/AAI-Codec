@@ -44,7 +44,6 @@ uint32_t dt_encode(uint32_t *input, bitbuffer *out, uint32_t lenght, uint16_t bi
 
         else
             bwritev(out, 0, 1);
-
         bwritev(out,abs(output[i]), maxbit);
     }
 
@@ -57,10 +56,11 @@ void dt_decode_int(int32_t *input, uint32_t *output,uint32_t length, uint32_t fi
 {
     uint32_t i;
 
-    for(i=0; i < length; i++){
-        if(i!=0)
-            output[i] = output[i-1]+input[i];
-        else output[0] = first+input[i];
+    output[0] = first;
+    output[1] = first+input[0];
+
+    for(i=2; i < length; i++){
+        output[i] = output[i-1]+input[i-1];
     }
 }
 
@@ -70,7 +70,7 @@ void dt_decode(bitbuffer *input, uint32_t maxbit, uint32_t *output, uint32_t len
     int32_t *input_int = malloc(sizeof(int32_t)*length);
 
 
-    for (i=0; i<length; i++){
+    for (i=0; i<length-1; i++){
         breadv(input, &signal, 1);
         breadv(input, &diff, maxbit);
         if(signal == 1)

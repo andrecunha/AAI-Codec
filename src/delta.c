@@ -81,6 +81,7 @@ void dt_decode(bitbuffer *input, uint32_t maxbit, uint32_t *output, uint32_t len
     }
 
     dt_decode_int(input_int, output, length, first);
+    free(input_int);
 
 }
 

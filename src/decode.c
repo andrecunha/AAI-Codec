@@ -45,7 +45,6 @@ void dec_prepare_input_file(FILE *fp)
     printf("Getting header...\n");
 
     binh_get_header(input_file_header, fp, &frequencies, &frequency_length, &firsts, &max_bits, &nbits_run, &nbits_code);
-    printf("CODE: %"PRIu32"\n", nbits_code[0]);
     first_enc = input_file_header->firstEncoding;
     sec_enc = input_file_header->secondEncoding;
     third_enc = input_file_header->thirdEncoding;
@@ -73,7 +72,7 @@ void dec_prepare_input_file(FILE *fp)
 void dec_prepare_output_file (FILE *fp)
 {
         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                bprint(&output_buffer[curr_channel]);
+                /*bprint(&output_buffer[curr_channel]);*/
                 if(output_vector[curr_channel])
                         free(output_vector[curr_channel]);
                 if(data_vector[curr_channel])
@@ -87,6 +86,10 @@ void dec_prepare_output_file (FILE *fp)
             free(nbits_run);
         if(nbits_code)
             free(nbits_code);
+        if(firsts)
+            free(firsts);
+        if(max_bits)
+            free(max_bits);
         if(frequencies)
             free(frequencies);
         free(data_buffer);
@@ -148,7 +151,7 @@ void dec_delta(FILE *in_fp)
 
                 uint32_t output_length = (data_buffer[curr_channel].n_bytes*8 - (8-data_buffer[curr_channel].bits_last))/max_bits[curr_channel];
 
-                output_vector = calloc(output_length, sizeof(uint32_t));
+                output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
 
                 if(first_enc==DELTA)
                         dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, firsts[curr_channel]);

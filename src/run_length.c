@@ -159,8 +159,8 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
     
     smaller = malloc(sizeof(bitbuffer));
     curr = malloc(sizeof(bitbuffer));
-    binit(smaller, 1);
-    binit(curr, 1);
+    binit(smaller, size);
+    binit(curr, size);
 
     /*Increases smaller curr2 and decreases input pointers*/
     /*bit_buffer_cpy(curr2, input, input->n_bytes*8-(8-input->bits_last));*/
@@ -190,7 +190,7 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
                 (smaller->n_bytes*8-(8-smaller->bits_last))){
             /*Deallocates last smaller*/
             bdestroy(smaller);
-            binit(smaller, 1);
+            binit(smaller, size);
 
             /*Increases smaller pointers and decreases curr pointers*/
             bit_buffer_cpy(smaller, curr, curr->n_bytes*8-(8-curr->bits_last));
@@ -200,7 +200,7 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
         }
         /*Needs to be deallocated*/
         bdestroy(curr);
-        binit(curr, 1);
+        binit(curr, size);
     }
     
 

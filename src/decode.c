@@ -71,13 +71,13 @@ void dec_prepare_input_file(FILE *fp)
 
 void dec_prepare_output_file (FILE *fp)
 {
-/*     if(putHeader(input_file_header, fp)){
+     if(putHeader(input_file_header, fp)){
         ERROR("putHeader");
      }
     
-    if (fwrite(&(output_buffer[0]).original_data, sizeof(uint8_t), output_buffer[0].n_bytes, fp) != output_buffer[0].n_bytes){
+    if (fwrite(output_buffer[0].original_data, sizeof(uint8_t), output_buffer[0].n_bytes, fp) != output_buffer[0].n_bytes){
         ERROR("Writing data");
-    }*/
+    }
 
     for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
         
@@ -150,13 +150,13 @@ void dec_run_length(FILE *in_fp)
             binit(&data_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8-(8-output_buffer[curr_channel].bits_last));
 
             bit_buffer_cpy(&data_buffer[curr_channel], &output_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8-(8-output_buffer[curr_channel].bits_last));
-            bprint(&data_buffer[curr_channel]);
+         /*   bprint(&data_buffer[curr_channel]);*/
         }else{
             /* Therefore, this is the first one. */
             binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
             rl_decode(input_file_header->bitsPerSample, nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
         }
-        bprint(&output_buffer[curr_channel]);
+       /* bprint(&output_buffer[curr_channel]);*/
     }
 }
 
@@ -181,9 +181,13 @@ void dec_delta(FILE *in_fp)
             /* Here, the previous encoding can only be run-length. */
             dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
 
+        if(output_buffer){
+            bdestroy(&output_buffer[curr_channel]);
+            binit(&output_buffer[curr_channel], output_length);
+        }
         b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, 0);
 
-        bprint(&output_buffer[curr_channel]);
+/*        bprint(&output_buffer[curr_channel]);*/
     }
 }
 

@@ -351,17 +351,17 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t ***frequencies, uint32_t *f
 
             for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++) {
 
-                if(fread((nbits_run)[curr_channel], sizeof(uint32_t), 1, f) != 1) {
+                if(fread(&((*nbits_run)[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
                     ERROR("Cannot read nbits_run from file.");
                     exit(1);
                 }
-                printf("Nbits_run %"PRIu32"\n", *nbits_run[curr_channel]);
+                printf("Nbits_run %"PRIu32"\n", (*nbits_run)[curr_channel]);
 
-                if(fread((nbits_code)[curr_channel], sizeof(uint32_t), 1, f) != 1) {
+                if(fread(&((*nbits_code)[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
                     ERROR("Cannot read nbits_code from file.");
                     exit(1);
                 }
-                printf("Nbits_code %"PRIu32"\n", *nbits_code[curr_channel]);
+                printf("Nbits_code %"PRIu32"\n", (*nbits_code)[curr_channel]);
             }
        }
 

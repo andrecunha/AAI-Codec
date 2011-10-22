@@ -101,14 +101,8 @@ void dec_prepare_output_file (FILE *fp)
                     printf("ERROR: io chunkSize\n");
                 }   
             }   
-/*                printf("k: %"PRIu32" curr: %d\n", k, curr_channel);*/
         }
     }
-
-/*    bprint(&output_buffer[0]);
-    bprint(&output_buffer[1]);*/
-    
-
 
     for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
         
@@ -182,34 +176,23 @@ void dec_run_length(FILE *in_fp)
     printf("Applying run-length decoding...\n");
 
     for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+        bdestroy(&data_buffer[curr_channel]);
+
+        binit(&data_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8-(8-output_buffer[curr_channel].bits_last));
+
+        bit_buffer_cpy(&data_buffer[curr_channel], &output_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8-(8-output_buffer[curr_channel].bits_last));
+
+        bdestroy(&output_buffer[curr_channel]);
+        
+        binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
         if(sec_enc==RUN_LENGTH){ 
+            
             rl_decode(max_bits[curr_channel]+1, nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
 
-            /*bprint(&output_buffer[curr_channel]);*/
-
-            bdestroy(&data_buffer[curr_channel]);
-
-            binit(&data_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8-(8-output_buffer[curr_channel].bits_last));
-
-            bit_buffer_cpy(&data_buffer[curr_channel], &output_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8-(8-output_buffer[curr_channel].bits_last));
-         /*   bprint(&data_buffer[curr_channel]);*/
         }else{
-            if(!sec_enc){
-                binit(&output_buffer[curr_channel], input_file_header->subchunk2size);  
-            }else{
-                if(data_buffer){
-                    bdestroy(&data_buffer[curr_channel]);
-
-                    binit(&data_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8-(8-output_buffer[curr_channel].bits_last));
-
-                    bit_buffer_cpy(&data_buffer[curr_channel], &output_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8-(8-output_buffer[curr_channel].bits_last));
-                }
-                bdestroy(&output_buffer[curr_channel]);
-                binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
-            }
             rl_decode(input_file_header->bitsPerSample, nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
         }
-      /* bprint(&output_buffer[curr_channel]);*/
+            /*bprint(&output_buffer[curr_channel]);*/
     }
 }
 

@@ -71,13 +71,13 @@ void dec_prepare_input_file(FILE *fp)
 
 void dec_prepare_output_file (FILE *fp)
 {
-     if(putHeader(input_file_header, fp)){
+/*     if(putHeader(input_file_header, fp)){
         ERROR("putHeader");
      }
     
     if (fwrite(&(output_buffer[0]).original_data, sizeof(uint8_t), output_buffer[0].n_bytes, fp) != output_buffer[0].n_bytes){
         ERROR("Writing data");
-    }
+    }*/
 
     for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
         
@@ -142,9 +142,15 @@ void dec_run_length(FILE *in_fp)
             
             /*XXX: Precisamos passar os dados do data_vector para o data_buffer. */
             rl_decode(max_bits[curr_channel]+1, nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
+
             /*bprint(&output_buffer[curr_channel]);*/
+
             bdestroy(&data_buffer[curr_channel]);
-            bit_buffer_cpy(&data_buffer[curr_channel], &output_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8 - (8 - output_buffer[curr_channel].bits_last));
+
+            binit(&data_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8-(8-output_buffer[curr_channel].bits_last));
+
+            bit_buffer_cpy(&data_buffer[curr_channel], &output_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8-(8-output_buffer[curr_channel].bits_last));
+            bprint(&data_buffer[curr_channel]);
         }else{
             /* Therefore, this is the first one. */
             binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
@@ -164,15 +170,19 @@ void dec_delta(FILE *in_fp)
         uint32_t output_length = ((data_buffer[curr_channel].n_bytes*8 - (8-data_buffer[curr_channel].bits_last))/(max_bits[curr_channel]+1)) + 1;
 
         output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
+
         memset(output_vector[curr_channel], 0, output_length);
 
         if(first_enc==DELTA)
+
             dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, firsts[curr_channel]);
+
         else
             /* Here, the previous encoding can only be run-length. */
             dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
 
         b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, 0);
+
         bprint(&output_buffer[curr_channel]);
     }
 }

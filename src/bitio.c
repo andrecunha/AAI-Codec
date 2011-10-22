@@ -46,8 +46,10 @@ int bwrite(bitbuffer *b, uint8_t data)
 	if(bempty(b))
 		b->n_bytes = 1;
 
-	if (data == 1)
+	if (data == 1){
+/*        printf("%lu ", b->bits_last);*/
 		b->data[b->n_bytes-1] |= (1 << (8-b->bits_last-1));
+    }
 
 	b->bits_last++;
     
@@ -133,6 +135,8 @@ void bit_buffer_cpy(bitbuffer *output, bitbuffer *input, uint32_t size){
     uint8_t buf = 0;
     uint32_t i=0;
 
+    /*bprint(input);
+    printf("SIZE: %"PRIu32"\n", size);*/
     /*input->bits_offset = 0;*/
 
     for(i=0; i<size; i++){

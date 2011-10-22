@@ -182,7 +182,7 @@ void b_from_uint32(bitbuffer *b, uint32_t *input,
     b->bits_last = b_last;
 }
 
-void b_from_uint32(bitbuffer *b, uint32_t *input, 
+void b_from_uint32_all(bitbuffer *b, uint32_t *input, 
         uint32_t input_length, uint8_t nbits) {
     uint32_t i;
 

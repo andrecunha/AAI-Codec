@@ -72,96 +72,102 @@ void dec_prepare_input_file(FILE *fp)
 void dec_prepare_output_file (FILE *fp)
 {
 
-                for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                
-                bprint(&output_buffer[curr_channel]);
-                if(output_vector[curr_channel])
-                        free(output_vector[curr_channel]);
-                if(data_vector[curr_channel])
-                        free(data_vector[curr_channel]);
-                bdestroy(&output_buffer[curr_channel]);
-                bdestroy(&data_buffer[curr_channel]);
-                if(frequencies && frequencies[curr_channel])
-                    free(frequencies[curr_channel]);
-        }
-        if(nbits_run)
-            free(nbits_run);
-        if(nbits_code)
-            free(nbits_code);
-        if(firsts)
-            free(firsts);
-        if(max_bits)
-            free(max_bits);
-        if(frequencies)
-            free(frequencies);
-        free(data_buffer);
-        free(data_vector);
-        free(output_buffer);
-        free(output_vector);
-        free(input_file_header);
+    for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+        
+        /*bprint(&output_buffer[curr_channel]);*/
+        if(output_vector[curr_channel])
+                free(output_vector[curr_channel]);
+        if(data_vector[curr_channel])
+                free(data_vector[curr_channel]);
+        bdestroy(&output_buffer[curr_channel]);
+        bdestroy(&data_buffer[curr_channel]);
+        if(frequencies && frequencies[curr_channel])
+            free(frequencies[curr_channel]);
+    }
+    if(nbits_run)
+        free(nbits_run);
+    if(nbits_code)
+        free(nbits_code);
+    if(firsts)
+        free(firsts);
+    if(max_bits)
+        free(max_bits);
+    if(frequencies)
+        free(frequencies);
+    free(data_buffer);
+    free(data_vector);
+    free(output_buffer);
+    free(output_vector);
+    free(input_file_header);
 }
 
 void dec_huffman(FILE *in_fp)
 {
-        printf("Applying Huffman decoding...\n");
+    printf("Applying Huffman decoding...\n");
 
-        /* First, we need to compute the length of the output vector. */
-        uint32_t output_length=0, i;
-        for(i=0; i<frequency_length; i++)
-                output_length+=frequencies[0][i];
+    /* First, we need to compute the length of the output vector. */
+    uint32_t output_length=0, i;
+    for(i=0; i<frequency_length; i++)
+            output_length+=frequencies[0][i];
 
-        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                if(output_vector[curr_channel])
-                        free(output_vector[curr_channel]);
+    for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+        if(output_vector[curr_channel])
+                free(output_vector[curr_channel]);
 
-                output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
+        output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
 
-                hf_decode (&(data_buffer[curr_channel]), frequencies[curr_channel], output_vector[curr_channel], frequency_length);
-    bdestroy(&data_buffer[curr_channel]);
-    binit(&data_buffer[curr_channel], input_file_header->subchunk2size);
-     b_from_uint32(&data_buffer[curr_channel], output_vector[curr_channel], 
-    output_length, 8,  0);
-    bprint(&data_buffer[curr_channel]);
-        }
+        hf_decode (&(data_buffer[curr_channel]), frequencies[curr_channel], output_vector[curr_channel], frequency_length);
+        bdestroy(&data_buffer[curr_channel]);
+        binit(&data_buffer[curr_channel], input_file_header->subchunk2size);
+        b_from_uint32(&data_buffer[curr_channel], output_vector[curr_channel], 
+            output_length, 8,  0);
+        bprint(&data_buffer[curr_channel]);
+    }
 }
 
 void dec_run_length(FILE *in_fp)
 {
-        printf("Applying run-length decoding...\n");
+    printf("Applying run-length decoding...\n");
 
-        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-            if(sec_enc==RUN_LENGTH){ 
-                /* Therefore, the first one was surely delta encoding. */
-                
-                /*XXX: Precisamos passar os dados do data_vector para o data_buffer. */
-                rl_decode(max_bits[curr_channel], nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
-            }else{
-                /* Therefore, this is the first one. */
-                binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
-                rl_decode(input_file_header->bitsPerSample, nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
-            }
+    for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+        if(sec_enc==RUN_LENGTH){ 
+            /* Therefore, the first one was surely delta encoding. */
+            
+            /*XXX: Precisamos passar os dados do data_vector para o data_buffer. */
+            rl_decode(max_bits[curr_channel]+1, nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
+            bprint(&output_buffer[curr_channel]);
+            bdestroy(&data_buffer[curr_channel]);
+            bit_buffer_cpy(&data_buffer[curr_channel], &output_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8 - (8 - output_buffer[curr_channel].bits_last));
+        }else{
+            /* Therefore, this is the first one. */
+            binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
+            rl_decode(input_file_header->bitsPerSample, nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
         }
+    }
 
 }
 
 void dec_delta(FILE *in_fp)
 {
-        printf("Delta decoding...\n");
-        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                if(output_vector[curr_channel])
-                        free(output_vector[curr_channel]);
+    printf("Delta decoding...\n");
+    for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+        if(output_vector[curr_channel])
+            free(output_vector[curr_channel]);
 
-                uint32_t output_length = ((data_buffer[curr_channel].n_bytes*8 - (8-data_buffer[curr_channel].bits_last))/(max_bits[curr_channel]+1)) + 1;
+        uint32_t output_length = ((data_buffer[curr_channel].n_bytes*8 - (8-data_buffer[curr_channel].bits_last))/(max_bits[curr_channel]+1)) + 1;
 
-                output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
+        output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
+        memset(output_vector[curr_channel], 0, output_length);
 
-                if(first_enc==DELTA)
-                        dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, firsts[curr_channel]);
-                else
-                        /* Here, the previous encoding can only be run-length. */
-                        dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
-                b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, 0);
-        }
+        if(first_enc==DELTA)
+            dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, firsts[curr_channel]);
+        else
+            /* Here, the previous encoding can only be run-length. */
+            dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
+
+        b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, 0);
+        bprint(&output_buffer[curr_channel]);
+    }
 }
 
 int main(int argc, char *argv[])

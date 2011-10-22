@@ -167,7 +167,7 @@ void rl_encode(bitbuffer *input, bitbuffer *output,
 
 
     for(i=1; i<=bits_per_sample; i++){
-        if(size%i)
+        if((n_bytes*8-(8-bits_last))%i)
             continue;
         /*Allocates memory to to_encode.*/
         /*Decreases input pointers.*/

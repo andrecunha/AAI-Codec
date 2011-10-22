@@ -43,238 +43,248 @@ uint8_t flag = 0;
 
 void enc_prepare_input_file(FILE *fp)
 {
-        input_file_header = malloc(sizeof(wavheader));
-        if (getHeader(input_file_header, fp)) {
-                ERROR("Error while reading header");
-                exit(1);
-        }
-        printWavHeader(input_file_header);
-        output_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
-        nbits_run = calloc(input_file_header->numChannels, sizeof(uint32_t));
-        nbits_code = calloc(input_file_header->numChannels, sizeof(uint32_t)); 
-        max_bits = calloc(input_file_header->numChannels, sizeof(uint32_t));
-        firsts = calloc(input_file_header->numChannels, sizeof(uint32_t));
-        frequencies = calloc(input_file_header->numChannels, sizeof(uint64_t *));
-        data_vector = calloc(input_file_header->numChannels, sizeof(uint32_t *));
+  input_file_header = malloc(sizeof(wavheader));
+
+  if (getHeader(input_file_header, fp)) {
+    ERROR("Error while reading header");
+    exit(1);
+  }
+
+  printWavHeader(input_file_header);
+
+  output_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
+  nbits_run = calloc(input_file_header->numChannels, sizeof(uint32_t));
+  nbits_code = calloc(input_file_header->numChannels, sizeof(uint32_t)); 
+  max_bits = calloc(input_file_header->numChannels, sizeof(uint32_t));
+  firsts = calloc(input_file_header->numChannels, sizeof(uint32_t));
+  frequencies = calloc(input_file_header->numChannels, sizeof(uint64_t *));
+  data_vector = calloc(input_file_header->numChannels, sizeof(uint32_t *));
 }
 
 void enc_prepare_output_file (FILE *fp)
 {
-        int curr_channel;
+  int curr_channel;
 
-        /* Writing the header. */
-        binheader h;
+  /* Writing the header. */
+  binheader h;
 
-        binh_make_bin_header(&h, input_file_header, first_enc, sec_enc,third_enc);
+  binh_make_bin_header(&h, input_file_header, first_enc, sec_enc,third_enc);
 
-        binh_put_header(&h, fp, frequencies, frequency_length, firsts, max_bits, nbits_run, nbits_code);
-        /*if(fwrite("BUFFER", sizeof("BUFFER"), 1, fp)!=1)
-            ERROR("BUFFER");*/
+  binh_put_header(&h, fp, frequencies, frequency_length, firsts, max_bits, nbits_run, nbits_code);
 
-        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++){
-                bflush(&output_buffer[curr_channel], fp);
-                if((first_enc==HUFFMAN)||(sec_enc==HUFFMAN)||(third_enc==HUFFMAN))
-                    free(frequencies[curr_channel]);
+  for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++){
+    bflush(&output_buffer[curr_channel], fp);
+    if((first_enc==HUFFMAN)||(sec_enc==HUFFMAN)||(third_enc==HUFFMAN))
+        free(frequencies[curr_channel]);
+  }
+
+  for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+    if(data_buffer)
+        bdestroy(&data_buffer[curr_channel]);
+    bdestroy(&output_buffer[curr_channel]);
+    if(data_vector && data_vector[curr_channel]){
+        /* if(flag){
+            free(data_vector[curr_channel]);
+        }else*/
+        if (((n_encodings==1)&&(first_enc == DELTA)) || ((n_encodings==2)&&(sec_enc == DELTA)) || ((n_encodings==3)&&(third_enc == DELTA))){
+            free(--data_vector[curr_channel]);
         }
-
-        /*TODO: Verificar essas desalocações malucas.*/
-        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                if(data_buffer)
-                    bdestroy(&data_buffer[curr_channel]);
-                bdestroy(&output_buffer[curr_channel]);
-                if(data_vector && data_vector[curr_channel])
-                {
-                        if(flag){
-                            free(data_vector[curr_channel]);
-                        }else if (((n_encodings==1)&&(first_enc == DELTA)) || ((n_encodings==2)&&(sec_enc == DELTA)) || ((n_encodings==3)&&(third_enc == DELTA))){
-                                free(--data_vector[curr_channel]);
-                        }
-                        else if (((n_encodings==1)&&(first_enc == HUFFMAN)) || ((n_encodings==2)&&(sec_enc == HUFFMAN)) || ((n_encodings==3)&&(third_enc == HUFFMAN))){
-                           free(data_vector[curr_channel]);
-                        }
-                }
+        else if (((n_encodings==1)&&(first_enc == HUFFMAN)) || ((n_encodings==2)&&(sec_enc == HUFFMAN)) || ((n_encodings==3)&&(third_enc == HUFFMAN))){
+            free(data_vector[curr_channel]);
         }
-        
-        free(data_vector);
-        if (data_buffer)
-            free(data_buffer);
-        free(output_buffer);
-        free(firsts);
-        free(max_bits);
-        free(nbits_code);
-        free(nbits_run);
-        free(frequencies);
-        free(input_file_header);
+    }
+  }
+  
+  free(data_vector);
+  if (data_buffer)
+      free(data_buffer);
+  free(output_buffer);
+  free(firsts);
+  free(max_bits);
+  free(nbits_code);
+  free(nbits_run);
+  free(frequencies);
+  free(input_file_header);
 }
 
 void enc_huffman(int previous, FILE *in_fp)
 {
-        printf("Applying Huffman encoding...\n");
+  printf("Applying Huffman encoding...\n");
 
-        /* Number of samples per channel. */
-        uint32_t channel_n_samples = (input_file_header->subchunk2size)/(input_file_header->numChannels)/((input_file_header->bitsPerSample)/8);
-        int curr_channel=0;
-        switch (previous) {
-                case (-1):
-                        {       /* Huffman is the first encoding option. */
+  /* Number of samples per channel. */
+  uint32_t channel_n_samples = (input_file_header->subchunk2size)/(input_file_header->numChannels)/((input_file_header->bitsPerSample)/8);
+  int curr_channel=0;
+  switch (previous) {
+     case (-1):
+       { /* Huffman is the first encoding option. */
 
-                                /* Loads the file into data_vector. */
-                                free(data_vector);
-                                load_to_uint32(in_fp, input_file_header, &data_vector);
+         /* Loads the file into data_vector. */
+         free(data_vector);
+         load_to_uint32(in_fp, input_file_header, &data_vector);
 
 
-                                for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                                        /* Initialize the bitbuffer of the current channel. */
-                                        binit(&output_buffer[curr_channel], input_file_header->subchunk2size/input_file_header->numChannels);
+         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+           /* Initialize the bitbuffer of the current channel. */
+           binit(&output_buffer[curr_channel], input_file_header->subchunk2size/input_file_header->numChannels);
 
-                                        frequency_length = pow(2,input_file_header->bitsPerSample);
-                                        
-                                        hf_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), &(frequencies[curr_channel]), channel_n_samples, pow(2,input_file_header->bitsPerSample));
-                                }
-                        }
-                        break;
+           frequency_length = pow(2,input_file_header->bitsPerSample);
+           
+           hf_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), 
+                &(frequencies[curr_channel]), channel_n_samples, pow(2,input_file_header->bitsPerSample));
+         }
+       }
+       break;
 
-                case RUN_LENGTH:
-                        {
-                                for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                                        /* The size, in bits and blocks, of the run-length encoding output. */
-                                        uint32_t output_size_bits = (output_buffer[curr_channel].n_bytes*8 - (8-output_buffer[curr_channel].bits_last)),
-                                                 output_size_blocks = output_size_bits/(nbits_run[curr_channel] + nbits_code[curr_channel]);
+     case RUN_LENGTH:
+       {
+         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+           /* The size, in bits and blocks, of the run-length encoding output. */
+           uint32_t output_size_bits = (output_buffer[curr_channel].n_bytes*8 - (8-output_buffer[curr_channel].bits_last)),
+                    output_size_blocks = output_size_bits/(nbits_run[curr_channel] + nbits_code[curr_channel]);
 
-                                        /* Converts the output bitbuffer from run-length to data_vector. */
-                                        b_to_uint32(&(output_buffer[curr_channel]), &(data_vector[curr_channel]), nbits_run[curr_channel] + nbits_code[curr_channel], 0);
-                                        bdestroy(&(output_buffer[curr_channel]));
-                                        binit(&output_buffer[curr_channel], input_file_header->subchunk2size/input_file_header->numChannels);
+           /* Converts the output bitbuffer from run-length to data_vector. */
+           b_to_uint32(&(output_buffer[curr_channel]), &(data_vector[curr_channel]), nbits_run[curr_channel] + nbits_code[curr_channel], 0);
+           bdestroy(&(output_buffer[curr_channel]));
+           binit(&output_buffer[curr_channel], input_file_header->subchunk2size/input_file_header->numChannels);
 
-                                        frequency_length = pow(2,nbits_run[curr_channel] + nbits_code[curr_channel]);
+           frequency_length = pow(2,nbits_run[curr_channel] + nbits_code[curr_channel]);
 
-                                        hf_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), &(frequencies[curr_channel]), output_size_blocks , pow(2,nbits_run[curr_channel] + nbits_code[curr_channel]));
-                                }
-                        }
-                        break;
+           hf_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), 
+                &(frequencies[curr_channel]), output_size_blocks , pow(2,nbits_run[curr_channel] + nbits_code[curr_channel]));
+         }
+       }
+       break;
 
-                case DELTA:
-                        {
-                                /*XXX: Torce para não dar problema aqui!!!*/
+     case DELTA:
+       {
+               /*XXX: Torce para não dar problema aqui!!!*/
 
-                                for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                                                if(!flag) 
-                                                        free(--(data_vector[curr_channel]));
-                                                else free(data_vector[curr_channel]);
-                                }
-
-                                for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                                        /* We encode the output of the delta encoding taking blocks of max_bits bits. */
-                                        uint32_t block_size = ((output_buffer[curr_channel].n_bytes*8 - (8-output_buffer[curr_channel].bits_last))/(max_bits[curr_channel]));
-                                        b_to_uint32(&(output_buffer[curr_channel]), &(data_vector[curr_channel]), max_bits[curr_channel], 0);
-                                        bdestroy(&(output_buffer[curr_channel]));
-                                        binit(&output_buffer[curr_channel], input_file_header->subchunk2size/input_file_header->numChannels);
-                                        frequency_length = pow(2, max_bits[curr_channel]);
-                                        hf_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), &(frequencies[curr_channel]), block_size, pow(2, max_bits[curr_channel]));
-
-                                }
-                        break;
-        }
-        }
-
-        /*XXX: Está certa a brincadeira!!!*/
+         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+           if(!flag) 
+                   free(--(data_vector[curr_channel]));
+           else free(data_vector[curr_channel]);
+         }
+         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+           /* We encode the output of the delta encoding taking blocks of max_bits bits. */
+           uint32_t block_size = ((output_buffer[curr_channel].n_bytes*8 - (8-output_buffer[curr_channel].bits_last))/(max_bits[curr_channel]));
+           b_to_uint32(&(output_buffer[curr_channel]), &(data_vector[curr_channel]), max_bits[curr_channel], 0);
+           bdestroy(&(output_buffer[curr_channel]));
+           binit(&output_buffer[curr_channel], input_file_header->subchunk2size/input_file_header->numChannels);
+           frequency_length = pow(2, max_bits[curr_channel]);
+           hf_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), &(frequencies[curr_channel]), block_size, pow(2, max_bits[curr_channel]));
+         }
+       }
+       break;
+  }
 }
 
 void enc_run_length(int previous, FILE *in_fp)
 {
-    printf("Applying run-length encoding...\n");
+  printf("Applying run-length encoding...\n");
 
-    int curr_channel=0;
-    switch (previous) {
-            case -1:
-                    {       /* Run-length is the first encoding. */
+  int curr_channel=0;
+  switch (previous) {
+    case -1:
+      {       /* Run-length is the first encoding. */
 
-                            load_to_bitbuffer(in_fp, input_file_header, &data_buffer);
+        load_to_bitbuffer(in_fp, input_file_header, &data_buffer);
 
-                            for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                                    binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
-                                    rl_encode(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), input_file_header->bitsPerSample, &(nbits_run[curr_channel]), &(nbits_code[curr_channel]));
-                            }
-                    }
-                    break;
+        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+          binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
+          rl_encode(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), 
+            input_file_header->bitsPerSample, &(nbits_run[curr_channel]), &(nbits_code[curr_channel]));
+        }
+      }
+      break;
 
-            case HUFFMAN:
-                    {
-                            ERROR("Unsupported ordering. Cannot apply any compression after Huffman.");
-                            exit(EXIT_FAILURE);
-                    }
-                    break;
+    case HUFFMAN:
+      {
+        ERROR("Unsupported ordering. Cannot apply any compression after Huffman.");
+        exit(EXIT_FAILURE);
+      }
+      break;
 
-            case DELTA:
-                    {
-                            for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                                            if(!flag)
-                                                free(--(data_vector[curr_channel]));
-                                            else
-                                                free(data_vector[curr_channel]);
-                            }
+    case DELTA:
+      {
+        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+          if(!flag)
+              free(--(data_vector[curr_channel]));
+          else
+              free(data_vector[curr_channel]);
+        }
 
-                            data_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
+        data_buffer = calloc(input_file_header->numChannels, sizeof(bitbuffer));
 
-                            for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                                binit(&(data_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
-                                bit_buffer_cpy(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), output_buffer[curr_channel].n_bytes*8 - (8 - output_buffer[curr_channel].bits_last));
-                                bdestroy(&(output_buffer[curr_channel]));
-                                binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
-                                rl_encode(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), max_bits[curr_channel], &(nbits_run[curr_channel]), &(nbits_code[curr_channel]));
-                            }
+        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+            binit(&(data_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
+            bit_buffer_cpy(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), 
+                output_buffer[curr_channel].n_bytes*8 - (8 - output_buffer[curr_channel].bits_last));
+            printf("\n\nDATABUFER\n\n");
+            bprint(&(data_buffer[curr_channel]));
+            bdestroy(&(output_buffer[curr_channel]));
+            binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
+            rl_encode(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), 
+                max_bits[curr_channel]+1, &(nbits_run[curr_channel]), &(nbits_code[curr_channel]));
+            bprint(&(output_buffer[curr_channel]));
+            print_encoded(&(output_buffer[curr_channel]), nbits_run[curr_channel], (nbits_code[curr_channel]));
+        }
 
-                    }
-                    break;
-    }
+      }
+      break;
+  }
 }
 
 void enc_delta(int previous, FILE *in_fp)
 {
 
-        int curr_channel;
-        uint32_t channel_n_samples = (input_file_header->subchunk2size)/(input_file_header->numChannels)/((input_file_header->bitsPerSample)/8);
-        printf("Delta encoding...\n");
-        switch (previous) {
-            case -1:
-                    {       /* Delta encoding is the first tecnique applied. */
-                            free(data_vector);
-                            load_to_uint32(in_fp, input_file_header, &data_vector);
+  int curr_channel;
+  uint32_t channel_n_samples = (input_file_header->subchunk2size)/(input_file_header->numChannels)/((input_file_header->bitsPerSample)/8);
+  printf("Delta encoding...\n");
+  switch (previous) {
+    case -1:
+      {       /* Delta encoding is the first tecnique applied. */
+        free(data_vector);
+        load_to_uint32(in_fp, input_file_header, &data_vector);
 
-                            for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                                    firsts[curr_channel] = data_vector[curr_channel][0];
-                                    /*data_vector[curr_channel] = &(data_vector[curr_channel][1]);*/
-                                    data_vector[curr_channel]++;
-                                    binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
-                                    max_bits[curr_channel] = dt_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), channel_n_samples-1, input_file_header->bitsPerSample, firsts[curr_channel]);
-                            }
-                    }
-                    break;
+        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+          firsts[curr_channel] = data_vector[curr_channel][0];
+          data_vector[curr_channel]++;
 
-            case RUN_LENGTH:
-                    {
-                            /*memset(firsts, 0, input_file_header->numChannels*sizeof(uint32_t));
-                            flag = 1;*/
+          binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
 
-                            for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
-                                uint32_t size = b_to_uint32(&(output_buffer[curr_channel]), &(data_vector[curr_channel]), nbits_code[curr_channel] + nbits_run[curr_channel], 0);
-                                bdestroy(&(output_buffer[curr_channel]));
-                                firsts[curr_channel] = data_vector[curr_channel][0];
-                                data_vector[curr_channel]++;
-                                binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
-                                max_bits[curr_channel] = dt_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), size-1, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
-                            }
+          max_bits[curr_channel] = dt_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), 
+              channel_n_samples-1, input_file_header->bitsPerSample, firsts[curr_channel]);
 
-                    }
-                    break;
-
-            case HUFFMAN:
-                    {
-                            ERROR("Unsupported ordering. Cannot apply any compression after Huffman.");
-                            exit(1);
-                    }
-                    break;
+          bprint(&(output_buffer[curr_channel]));
         }
+      }
+      break;
+
+    case RUN_LENGTH:
+      {
+        /*memset(firsts, 0, input_file_header->numChannels*sizeof(uint32_t));
+        flag = 1;*/
+
+        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+          uint32_t size = b_to_uint32(&(output_buffer[curr_channel]), &(data_vector[curr_channel]), nbits_code[curr_channel] + nbits_run[curr_channel], 0);
+          bdestroy(&(output_buffer[curr_channel]));
+          firsts[curr_channel] = data_vector[curr_channel][0];
+          data_vector[curr_channel]++;
+          binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
+          max_bits[curr_channel] = dt_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), 
+                size-1, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
+        }
+
+      }
+      break;
+
+    case HUFFMAN:
+      {
+        ERROR("Unsupported ordering. Cannot apply any compression after Huffman.");
+        exit(1);
+      }
+      break;
+  }
 
 }
 

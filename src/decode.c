@@ -127,7 +127,7 @@ void dec_huffman(FILE *in_fp)
         bdestroy(&data_buffer[curr_channel]);
         binit(&data_buffer[curr_channel], input_file_header->subchunk2size);
         b_from_uint32(&data_buffer[curr_channel], output_vector[curr_channel], 
-            output_length, 8,  0);
+            output_length, nbits_code[curr_channel] + nbits_run[curr_channel],  0); 
         bprint(&data_buffer[curr_channel]);
     }
 }
@@ -150,8 +150,8 @@ void dec_run_length(FILE *in_fp)
             binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
             rl_decode(input_file_header->bitsPerSample, nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
         }
+        bprint(&output_buffer[curr_channel]);
     }
-
 }
 
 void dec_delta(FILE *in_fp)

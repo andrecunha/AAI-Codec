@@ -124,10 +124,24 @@ void dec_huffman(FILE *in_fp)
         output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
 
         hf_decode (&(data_buffer[curr_channel]), frequencies[curr_channel], output_vector[curr_channel], frequency_length);
+       
+        int prev_enc;
+        if(sec_enc == HUFFMAN)
+                prev_enc = first_enc == DELTA ? DELTA : RUN_LENGTH;
+        else if (third_enc == HUFFMAN)
+                prev_enc = sec_enc == DELTA ? DELTA : RUN_LENGTH;
+
+        uint32_t nbits_block;
+
+        if (first_enc == HUFFMAN)
+                nbits_block = input_file_header -> bitsPerSample;
+        else 
+                nbits_block = (prev_enc == RUN_LENGTH) ? (nbits_code[curr_channel] + nbits_run[curr_channel]) : (max_bits[curr_channel]+1);
+
         bdestroy(&data_buffer[curr_channel]);
         binit(&data_buffer[curr_channel], input_file_header->subchunk2size);
-        b_from_uint32(&data_buffer[curr_channel], output_vector[curr_channel], 
-            output_length, nbits_code[curr_channel] + nbits_run[curr_channel],  0); 
+        b_from_uint32(&data_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_block,  0);
+
         bprint(&data_buffer[curr_channel]);
     }
 }

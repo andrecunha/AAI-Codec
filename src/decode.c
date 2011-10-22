@@ -144,7 +144,14 @@ void dec_huffman(FILE *in_fp)
         binit(&data_buffer[curr_channel], input_file_header->subchunk2size);
         b_from_uint32(&data_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_block,  0);
 
-        bprint(&data_buffer[curr_channel]);
+        bdestroy(&output_buffer[curr_channel]);
+
+        binit(&output_buffer[curr_channel], data_buffer[curr_channel].n_bytes*8-(8-data_buffer[curr_channel].bits_last));
+
+        bit_buffer_cpy(&output_buffer[curr_channel], &data_buffer[curr_channel], data_buffer[curr_channel].n_bytes*8-(8-data_buffer[curr_channel].bits_last));
+        
+
+        /*bprint(&data_buffer[curr_channel]);*/
     }
 }
 

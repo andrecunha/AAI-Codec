@@ -63,7 +63,7 @@ void dec_prepare_input_file(FILE *fp)
 
     for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++){
            printf("Reading data buffer");
-           if( bget(&(data_buffer[curr_channel]), fp)){
+           if( bget(&(output_buffer[curr_channel]), fp)){
                 ERROR("Couldn't read bit buffer from input file");
             }
      }
@@ -154,8 +154,7 @@ void dec_huffman(FILE *in_fp)
 
         output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
        
-        /* As Huffman is always the last encoding option, is is always the first decoding option. So, the data will always be in the data buffer. */
-        hf_decode (&(data_buffer[curr_channel]), frequencies[curr_channel], output_vector[curr_channel], frequency_length);
+        hf_decode (&(output_buffer[curr_channel]), frequencies[curr_channel], output_vector[curr_channel], frequency_length);
        
         int prev_enc;
         if(sec_enc == HUFFMAN)
@@ -223,36 +222,29 @@ void dec_delta(FILE *in_fp)
        
         uint32_t output_length;
 
-        if(first_enc==DELTA) { 
-            output_length = ((data_buffer[curr_channel].n_bytes*8 - (8-data_buffer[curr_channel].bits_last))/(max_bits[curr_channel]+1)) + 1;
-        }else{
-            output_length = ((data_buffer[curr_channel].n_bytes*8 - (8-data_buffer[curr_channel].bits_last))/(nbits_run[curr_channel]+nbits_code[curr_channel])) + 1;
-        }
+        if(first_enc==DELTA) 
+            output_length = ((output_buffer[curr_channel].n_bytes*8 - (8-output_buffer[curr_channel].bits_last))/(max_bits[curr_channel]+1)) + 1;
+        else
+            output_length = ((output_buffer[curr_channel].n_bytes*8 - (8-output_buffer[curr_channel].bits_last))/(nbits_run[curr_channel]+nbits_code[curr_channel])) + 1;
 
         output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
 
         memset(output_vector[curr_channel], 0, output_length);
 
-        if(first_enc==DELTA){
+        if(first_enc==DELTA)
+            dt_decode(&output_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, firsts[curr_channel]);
+        else
+            dt_decode(&output_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
 
-            dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, firsts[curr_channel]);
+        bdestroy(&output_buffer[curr_channel]);
+        binit(&output_buffer[curr_channel], output_length);
 
-        }else{
-            
-            dt_decode(&data_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, nbits_run[curr_channel] + nbits_code[curr_channel], firsts[curr_channel]);
-        }
-
-        if(output_buffer){
-            bdestroy(&output_buffer[curr_channel]);
-            binit(&output_buffer[curr_channel], output_length);
-        }
-        if(first_enc==DELTA){
+        if(first_enc==DELTA)
             b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, 0);
-        }else{
+        else
             b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_code[curr_channel]+nbits_run[curr_channel], 0);
-        }
 
-/*        bprint(&output_buffer[curr_channel]);*/
+        bprint(&output_buffer[curr_channel]);
     }
 }
 

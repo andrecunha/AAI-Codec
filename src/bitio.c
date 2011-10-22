@@ -182,6 +182,15 @@ void b_from_uint32(bitbuffer *b, uint32_t *input,
     b->bits_last = b_last;
 }
 
+void b_from_uint32(bitbuffer *b, uint32_t *input, 
+        uint32_t input_length, uint8_t nbits) {
+    uint32_t i;
+
+    for(i=0; i<input_length; i++){  
+       bwritev(b, input[i], nbits);
+    }
+}
+
 int bget(bitbuffer *b, FILE *f)
 {	
 	if(fread(&b->n_bytes, sizeof(unsigned long), 1, f)!=1) return 1;

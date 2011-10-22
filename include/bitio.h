@@ -101,6 +101,7 @@ uint32_t b_to_uint32(bitbuffer *b, uint32_t **output, uint8_t nbits, uint32_t of
 /* input_length é o tamanho do vetor de entrada. nbits é quantos bits de cada elemento do vetor de entrada serão colocados no buffer. */
 void b_from_uint32(bitbuffer *b, uint32_t *input, uint32_t input_length, uint8_t nbits, unsigned int b_last);
 
+void b_from_uint32(bitbuffer *b, uint32_t *input, uint32_t input_length, uint8_t nbits);
 /*! \fn int bget(bitbuffer *b, FILE *f)
  *
  *  \param b The bit buffer to be flushed.

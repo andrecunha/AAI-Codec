@@ -158,9 +158,9 @@ void dec_huffman(FILE *in_fp)
        
         int prev_enc;
         if(sec_enc == HUFFMAN)
-                prev_enc = first_enc == DELTA ? DELTA : RUN_LENGTH;
+                prev_enc = (first_enc == DELTA) ? DELTA : RUN_LENGTH;
         else if (third_enc == HUFFMAN)
-                prev_enc = sec_enc == DELTA ? DELTA : RUN_LENGTH;
+                prev_enc = (sec_enc == DELTA) ? DELTA : RUN_LENGTH;
 
         uint32_t nbits_block;
 
@@ -171,9 +171,9 @@ void dec_huffman(FILE *in_fp)
 
         bdestroy(&output_buffer[curr_channel]);
         binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
-        b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_block,  0);
+        b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_block);
 
-        bprint(&output_buffer[curr_channel]);
+        /*bprint(&output_buffer[curr_channel]);*/
     }
 }
 
@@ -240,9 +240,9 @@ void dec_delta(FILE *in_fp)
         binit(&output_buffer[curr_channel], output_length);
 
         if(first_enc==DELTA)
-            b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, 0);
+            b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample);
         else
-            b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_code[curr_channel]+nbits_run[curr_channel], 0);
+            b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_code[curr_channel]+nbits_run[curr_channel]);
 
         bprint(&output_buffer[curr_channel]);
     }

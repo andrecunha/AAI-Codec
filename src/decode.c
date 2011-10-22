@@ -42,6 +42,8 @@ void dec_prepare_input_file(FILE *fp)
 
     input_file_header = malloc(sizeof(binheader));
 
+
+
     printf("Getting header...\n");
 
     binh_get_header(input_file_header, fp, &frequencies, &frequency_length, &firsts, &max_bits, &nbits_run, &nbits_code);

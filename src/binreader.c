@@ -147,7 +147,7 @@ int binh_put_header(binheader *wh, FILE *f, uint64_t **frequencies, uint32_t fre
                     exit(1);
             }
 
-            int i, j;
+            int i/*, j*/;
             union frequency{
                 uint64_t freq64;
                 uint8_t freq8[8];
@@ -313,7 +313,7 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t ***frequencies, uint32_t *f
 
             printf("Frequency length: %"PRIu32"\n", *frequency_length);
 
-            int i, j;
+            int i/*, j*/;
 
             union frequency{
                 uint64_t freq64;

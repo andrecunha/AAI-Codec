@@ -4,6 +4,96 @@
 #include <wavreader.h>
 #include <error_handler.h>
 
+int putHeader(binheader *wh, FILE *f){
+    uint32_t riff = (wh->endianness == LITTLE_ENDIAN)?0x52494646:0x52494658;
+    uint32_t chunkSize = wh->chunkSize;
+    uint32_t wave = 0x57415645;
+    uint32_t fmt = 0x666d7420;
+    uint32_t subchunk1size = wh->subchunk1size;
+    uint16_t audioFormat = 0x0001;
+    uint16_t numChannels = wh->numChannels;
+    uint32_t sampleRate = wh->sampleRate;
+    uint32_t byteRate = wh->byteRate;
+    uint16_t blockAlign = wh->blockAlign;
+    uint16_t bitsPerSample = wh->bitsPerSample;
+    uint32_t data = 0x64617461;
+    uint32_t subchunk2size = wh->subchunk2size;
+    uint8_t endianness = wh->endianness;
+    
+    if(write_4_bytes(f, &riff, BIG_ENDIAN)){
+        ERROR("Couldn't write RIFF to file");
+        return 1;
+    }
+
+    if (write_4_bytes(f, &chunkSize, endianness)) {
+        printf("ERROR: io chunkSize\n");
+        return 1;
+    }   
+
+    if (write_4_bytes(f, &wave, BIG_ENDIAN)) {
+        printf("ERROR: io wave\n");
+        return 1;
+    }
+
+    if (write_4_bytes(f, &fmt, BIG_ENDIAN)) {
+        printf("ERROR: io fmt\n");
+        return 1;
+    }
+
+    if (write_4_bytes(f, &subchunk1size, endianness)) {
+        printf("ERROR: subchunk1size\n");
+        return 1;
+    }
+
+    if (write_2_bytes(f, &audioFormat, endianness)) {
+        printf("ERROR: audioFormat\n");
+        return 1;
+    }
+
+    if (write_2_bytes(f, &numChannels, endianness)) {
+        printf("ERROR: numChannels\n");
+        return 1;
+    }
+
+    if (write_4_bytes(f, &sampleRate, endianness)) {
+        printf("ERROR: sampleRate\n");
+        return 1;
+    }
+
+    if (write_4_bytes(f, &byteRate, endianness)) {
+        printf("ERROR: byteRate\n");
+        return 1;
+    }
+
+    if (write_2_bytes(f, &blockAlign, endianness)) {
+        printf("ERROR: blockAlign\n");
+        return 1;
+    }
+
+    if (write_2_bytes(f, &bitsPerSample, endianness)) {
+        printf("ERROR: bitsPerSample\n");
+        return 1;
+    }
+
+    int x=0;
+    if(fwrite(&x, 1, subchunk1size-16, f)!=(subchunk1size-16)){
+        ERROR("Garbage before DATA");   
+        return 1;
+    }
+    
+    if(write_4_bytes(f, &data, BIG_ENDIAN)){
+        ERROR("Data");
+        return 1;
+    }
+    
+    if(write_4_bytes(f, &subchunk2size, endianness)){
+        ERROR("Subchunk2size");
+        return 1;
+    }
+
+    return 0;
+}
+
 int getHeader(wavheader *wh, FILE *f){
     uint32_t riff;
     uint32_t chunkSize;
@@ -48,11 +138,11 @@ int getHeader(wavheader *wh, FILE *f){
             return 1;
         }
     }
-    if (read_4_bytes(f, &fmt, endianness)) {
+    if (read_4_bytes(f, &fmt, BIG_ENDIAN)) {
         printf("ERROR: io fmt\n");
         return 1;
     }else {
-        if (fmt == 0x666d7420) {
+        if (fmt != 0x666d7420) {
             printf("ERROR: fmt\n");
             return 1;
         }
@@ -110,7 +200,10 @@ int getHeader(wavheader *wh, FILE *f){
 
     }while(!exit);
     
-    if ((fread(&subchunk2size, 4, 1, f))!=1) return 1;
+    if (read_4_bytes(f, &subchunk2size, endianness)) {
+        printf("ERROR: subchunk2size\n");
+        return 1;
+    }
  
     wh->riff = riff;
     wh->chunkSize =  chunkSize;
@@ -126,6 +219,104 @@ int getHeader(wavheader *wh, FILE *f){
     wh->data = data;
     wh->subchunk2size = subchunk2size;
     wh->endianness = endianness;
+    return 0;
+}
+
+int write_byte(FILE *fp, uint8_t *c){
+    if(fwrite(c, 1, 1 ,fp)!=1){
+        ERROR("IO error at wavreader.write_byte");
+        return 1;
+    }
+    return 0;
+}
+
+int write_4_bytes(FILE *fp, uint32_t *out, int endianness){
+    uint8_t c[4];
+
+    if(endianness == BIG_ENDIAN){
+        c[3] = (*out) & 0x000000ff;
+        c[2] = (*out >> 8) & 0x000000ff;
+        c[1] = (*out >> 16) & 0x000000ff;
+        c[0] = (*out >> 24) & 0x000000ff;
+    }else{
+        c[0] = (*out) & 0x000000ff;
+        c[1] = (*out >> 8) & 0x000000ff;
+        c[2] = (*out >> 16) & 0x000000ff;
+        c[3] = (*out >> 24) & 0x000000ff;
+    }
+
+    if(write_byte(fp, &c[0])==1){
+        ERROR("IO error at wavreader.read_4_bytes");
+        return 1;
+    }
+
+    if(write_byte(fp, &c[1])==1){
+        ERROR("IO error at wavreader.read_4_bytes");
+        return 1;
+    }
+
+    if(write_byte(fp, &c[2])==1){
+        ERROR("IO error at wavreader.read_4_bytes");
+        return 1;
+    }
+
+    if(write_byte(fp, &c[3])==1){
+        ERROR("IO error at wavreader.read_4_bytes");
+        return 1;
+    }
+
+    return 0;
+}
+
+int write_3_bytes(FILE *fp, uint32_t *out, int endianness){
+    uint8_t c[4];
+
+    if(endianness == BIG_ENDIAN){
+        c[2] = (*out) & 0x0000ff;
+        c[1] = (*out >> 8) & 0x0000ff;
+        c[0] = (*out >> 16) & 0x0000ff;
+    }else{
+        c[0] = (*out) & 0x0000ff;
+        c[1] = (*out >> 8) & 0x0000ff;
+        c[2] = (*out >> 16) & 0x0000ff;
+    }
+
+    if(write_byte(fp, &c[0])){
+        ERROR("IO error at wavreader.read_3_bytes");
+        return 1;
+    }
+    if(write_byte(fp, &c[1])){
+        ERROR("IO error at wavreader.read_3_bytes");
+        return 1;
+    }
+    if(write_byte(fp, &c[2])){
+        ERROR("IO error at wavreader.read_3_bytes");
+        return 1;
+    }
+    
+    return 0;
+}
+
+int write_2_bytes(FILE *fp, uint16_t *out, int endianness){
+    uint8_t c[2];
+
+    if(endianness == BIG_ENDIAN){
+        c[1] = (*out) & 0x00ff;
+        c[0] = (*out >> 8) & 0x00ff;
+    }else{
+        c[0] = (*out) & 0x00ff;
+        c[1] = (*out >> 8) & 0x00ff;
+    }
+
+    if(write_byte(fp, &c[0])){
+        ERROR("IO error at wavreader.read_2_bytes");
+        return 1;
+    }
+    if(write_byte(fp, &c[1])){
+        ERROR("IO error at wavreader.read_2_bytes");
+        return 1;
+    }
+
     return 0;
 }
 

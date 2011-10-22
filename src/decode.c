@@ -124,7 +124,8 @@ void dec_huffman(FILE *in_fp)
                 free(output_vector[curr_channel]);
 
         output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
-
+       
+        /* As Huffman is always the last encoding option, is is always the first decoding option. So, the data will always be in the data buffer. */
         hf_decode (&(data_buffer[curr_channel]), frequencies[curr_channel], output_vector[curr_channel], frequency_length);
        
         int prev_enc;
@@ -140,18 +141,11 @@ void dec_huffman(FILE *in_fp)
         else 
                 nbits_block = (prev_enc == RUN_LENGTH) ? (nbits_code[curr_channel] + nbits_run[curr_channel]) : (max_bits[curr_channel]+1);
 
-        bdestroy(&data_buffer[curr_channel]);
-        binit(&data_buffer[curr_channel], input_file_header->subchunk2size);
-        b_from_uint32(&data_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_block,  0);
-
         bdestroy(&output_buffer[curr_channel]);
+        binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
+        b_from_uint32(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_block,  0);
 
-        binit(&output_buffer[curr_channel], data_buffer[curr_channel].n_bytes*8-(8-data_buffer[curr_channel].bits_last));
-
-        bit_buffer_cpy(&output_buffer[curr_channel], &data_buffer[curr_channel], data_buffer[curr_channel].n_bytes*8-(8-data_buffer[curr_channel].bits_last));
-        
-
-        /*bprint(&data_buffer[curr_channel]);*/
+        bprint(&output_buffer[curr_channel]);
     }
 }
 

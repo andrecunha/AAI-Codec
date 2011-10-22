@@ -71,6 +71,13 @@ void dec_prepare_input_file(FILE *fp)
 
 void dec_prepare_output_file (FILE *fp)
 {
+     if(putHeader(input_file_header, fp)){
+        ERROR("putHeader");
+     }
+    
+    if (fwrite(&(output_buffer[0]).original_data, sizeof(uint8_t), output_buffer[0].n_bytes, fp) != output_buffer[0].n_bytes){
+        ERROR("Writing data");
+    }
 
     for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
         
@@ -135,7 +142,7 @@ void dec_run_length(FILE *in_fp)
             
             /*XXX: Precisamos passar os dados do data_vector para o data_buffer. */
             rl_decode(max_bits[curr_channel]+1, nbits_code[curr_channel], nbits_run[curr_channel], &data_buffer[curr_channel], &output_buffer[curr_channel]);
-            bprint(&output_buffer[curr_channel]);
+            /*bprint(&output_buffer[curr_channel]);*/
             bdestroy(&data_buffer[curr_channel]);
             bit_buffer_cpy(&data_buffer[curr_channel], &output_buffer[curr_channel], output_buffer[curr_channel].n_bytes*8 - (8 - output_buffer[curr_channel].bits_last));
         }else{

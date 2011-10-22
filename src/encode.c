@@ -219,14 +219,12 @@ void enc_run_length(int previous, FILE *in_fp)
             binit(&(data_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
             bit_buffer_cpy(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), 
                 output_buffer[curr_channel].n_bytes*8 - (8 - output_buffer[curr_channel].bits_last));
-            printf("\n\nDATABUFER\n\n");
-            bprint(&(data_buffer[curr_channel]));
             bdestroy(&(output_buffer[curr_channel]));
             binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
             rl_encode(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), 
                 max_bits[curr_channel]+1, &(nbits_run[curr_channel]), &(nbits_code[curr_channel]));
-            bprint(&(output_buffer[curr_channel]));
-            print_encoded(&(output_buffer[curr_channel]), nbits_run[curr_channel], (nbits_code[curr_channel]));
+            /*bprint(&(output_buffer[curr_channel]));
+            print_encoded(&(output_buffer[curr_channel]), nbits_run[curr_channel], (nbits_code[curr_channel]));*/
         }
 
       }
@@ -255,7 +253,7 @@ void enc_delta(int previous, FILE *in_fp)
           max_bits[curr_channel] = dt_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), 
               channel_n_samples-1, input_file_header->bitsPerSample, firsts[curr_channel]);
 
-          bprint(&(output_buffer[curr_channel]));
+         /* bprint(&(output_buffer[curr_channel]));*/
         }
       }
       break;

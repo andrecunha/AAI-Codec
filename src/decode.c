@@ -147,7 +147,7 @@ void dec_huffman(FILE *in_fp)
                 free(output_vector[curr_channel]);
 
         output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
-       
+
         hf_decode (&(output_buffer[curr_channel]), frequencies[curr_channel], output_vector[curr_channel], frequency_length);
        
         int prev_enc;
@@ -167,6 +167,9 @@ void dec_huffman(FILE *in_fp)
         binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
         b_from_uint32_all(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_block);
 
+        printf("######################### max_bits = %"PRIu32"\n", max_bits[curr_channel]);
+        printf("######################### numero de bits: %lu \n", output_buffer[curr_channel].n_bytes*8 - (8-output_buffer[curr_channel].bits_last));
+        printf("######################### output_length: %"PRIu32"\n", output_length);
         /*bprint(&output_buffer[curr_channel]);*/
     }
 }
@@ -222,12 +225,13 @@ void dec_delta(FILE *in_fp)
         bdestroy(&output_buffer[curr_channel]);
         binit(&output_buffer[curr_channel], output_length);
 
+        /* O PROBLEMA PODE SER O OUTPUT_LENGTH!!!! */
         if(first_enc==DELTA)
             b_from_uint32_all(&output_buffer[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample);
         else
             b_from_uint32_all(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_code[curr_channel]+nbits_run[curr_channel]);
 
-        bprint(&output_buffer[curr_channel]);
+        /*bprint(&output_buffer[curr_channel]);*/
     }
 }
 

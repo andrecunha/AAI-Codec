@@ -370,16 +370,16 @@ int binh_get_header(binheader *wh, FILE *f, uint64_t ***frequencies, uint32_t *f
                *max_bits = calloc(wh->numChannels, sizeof(uint32_t));
                *firsts = calloc(wh->numChannels, sizeof(uint32_t));
                for(curr_channel=0; curr_channel<wh->numChannels; curr_channel++) {
-                    if(fread((max_bits[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
+                    if(fread(&((*max_bits)[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
                         ERROR("Cannot read max_bits from file.");
                         exit(1);
                     }
-                    printf("Max_bits %"PRIu32"\n", *max_bits[curr_channel]);
-                    if(fread((firsts[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
+                    printf("Max_bits %"PRIu32"\n", (*max_bits)[curr_channel]);
+                    if(fread(&((*firsts)[curr_channel]), sizeof(uint32_t), 1, f) != 1) {
                         ERROR("Cannot read firsts from file.");
                         exit(1);
                     }
-                    printf("Firsts %"PRIu32"\n", *firsts[curr_channel]);
+                    printf("Firsts %"PRIu32"\n", (*firsts)[curr_channel]);
                }
        }
 

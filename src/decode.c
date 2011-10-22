@@ -42,8 +42,6 @@ void dec_prepare_input_file(FILE *fp)
 
     input_file_header = malloc(sizeof(binheader));
 
-
-
     printf("Getting header...\n");
 
     binh_get_header(input_file_header, fp, &frequencies, &frequency_length, &firsts, &max_bits, &nbits_run, &nbits_code);
@@ -76,10 +74,41 @@ void dec_prepare_output_file (FILE *fp)
      if(putHeader(input_file_header, fp)){
         ERROR("putHeader");
      }
-    
-    if (fwrite(output_buffer[0].original_data, sizeof(uint8_t), output_buffer[0].n_bytes, fp) != output_buffer[0].n_bytes){
-        ERROR("Writing data");
+   
+    uint32_t k = 0, **vector = NULL, *size_vector;
+
+    vector = calloc(input_file_header->numChannels, sizeof(uint32_t *));
+    size_vector = calloc(input_file_header->numChannels, sizeof(uint32_t));
+
+    for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+        size_vector[curr_channel] = b_to_uint32(&output_buffer[curr_channel], &vector[curr_channel], input_file_header->bitsPerSample, 0);
     }
+
+    for (k=0; k<size_vector[0]; k++){
+        for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
+            switch (input_file_header->bitsPerSample/8){
+            case 1:
+            case 2:
+                if (write_2_bytes32(fp, &vector[curr_channel][k], input_file_header->endianness)) {
+                    printf("ERROR: io chunkSize\n");
+                }break;   
+            case 3:
+                if (write_3_bytes(fp, &vector[curr_channel][k], input_file_header->endianness)) {
+                    printf("ERROR: io chunkSize\n");
+                }break;   
+            case 4:
+                if (write_4_bytes(fp, &vector[curr_channel][k], input_file_header->endianness)) {
+                    printf("ERROR: io chunkSize\n");
+                }   
+            }   
+/*                printf("k: %"PRIu32" curr: %d\n", k, curr_channel);*/
+        }
+    }
+
+/*    bprint(&output_buffer[0]);
+    bprint(&output_buffer[1]);*/
+    
+
 
     for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
         

@@ -119,6 +119,8 @@ int write_2_bytes(FILE *fp, uint16_t *out, int endianness);
 
 int write_2_bytes32(FILE *fp, uint32_t *out, int endianness);
 
+int write_1_byte32(FILE *fp, uint32_t *out, int endianness);
+
 int load_to_uint32(FILE *fp, wavheader *h, uint32_t ***output);
 
 int load_to_bitbuffer (FILE *fp, wavheader *h,  bitbuffer **output);

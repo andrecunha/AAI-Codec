@@ -193,6 +193,7 @@ void enc_run_length(int previous, FILE *in_fp)
           binit(&(output_buffer[curr_channel]), input_file_header->subchunk2size/input_file_header->numChannels);
           rl_encode(&(data_buffer[curr_channel]), &(output_buffer[curr_channel]), 
             input_file_header->bitsPerSample, &(nbits_run[curr_channel]), &(nbits_code[curr_channel]));
+          bprint(&(output_buffer[curr_channel]));
         }
       }
       break;
@@ -229,7 +230,6 @@ void enc_run_length(int previous, FILE *in_fp)
       }
       break;
   }
-            /*bprint(&(output_buffer[0]));*/
 }
 
 void enc_delta(int previous, FILE *in_fp)

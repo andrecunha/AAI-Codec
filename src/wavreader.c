@@ -297,6 +297,21 @@ int write_3_bytes(FILE *fp, uint32_t *out, int endianness){
     return 0;
 }
 
+int write_1_byte32(FILE *fp, uint32_t *out, int endianness){
+    uint8_t c[2];
+
+    if(endianness == BIG_ENDIAN){
+        c[0] = (*out) & 0x000000ff;
+    }else{
+        c[0] = (*out) & 0x000000ff;
+    }
+
+    if(write_byte(fp, &c[0])){
+        ERROR("IO error at wavreader.read_2_bytes");
+        return 1;
+    }
+    return 0;
+}
 int write_2_bytes32(FILE *fp, uint32_t *out, int endianness){
     uint8_t c[2];
 

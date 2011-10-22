@@ -88,6 +88,9 @@ void dec_prepare_output_file (FILE *fp)
         for(curr_channel=0; curr_channel<input_file_header->numChannels; curr_channel++) {
             switch (input_file_header->bitsPerSample/8){
             case 1:
+                if ( write_1_byte32(fp, &vector[curr_channel][k], input_file_header->endianness)){
+                    printf("ERROR: io chunkSize\n");
+                }break;
             case 2:
                 if (write_2_bytes32(fp, &vector[curr_channel][k], input_file_header->endianness)) {
                     printf("ERROR: io chunkSize\n");

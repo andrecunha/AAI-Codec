@@ -77,7 +77,7 @@ int putHeader(binheader *wh, FILE *f){
 
     int x=0;
     if(fwrite(&x, 1, subchunk1size-16, f)!=(subchunk1size-16)){
-        ERROR("Garbage before DATA");   
+        ERROR("Garbage before DATA");
         return 1;
     }
     

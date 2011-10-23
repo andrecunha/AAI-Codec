@@ -174,7 +174,7 @@ void dec_huffman(FILE *in_fp)
         binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
         b_from_uint32_all(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_block);
 
-        /*bprint(&output_buffer[curr_channel]);*/
+
     }
 }
 

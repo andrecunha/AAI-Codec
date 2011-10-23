@@ -172,6 +172,7 @@ void enc_huffman(int previous, FILE *in_fp)
            binit(&output_buffer[curr_channel], input_file_header->subchunk2size/input_file_header->numChannels);
            frequency_length = pow(2, max_bits[curr_channel]);
            hf_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), &(frequencies[curr_channel]), block_size, pow(2, max_bits[curr_channel]));
+           bprint(&(output_buffer[curr_channel]));
          }
        }
        break;
@@ -252,7 +253,7 @@ void enc_delta(int previous, FILE *in_fp)
 
           max_bits[curr_channel] = dt_encode(data_vector[curr_channel], &(output_buffer[curr_channel]), 
               channel_n_samples-1, input_file_header->bitsPerSample, firsts[curr_channel]);
-
+            
          /* bprint(&(output_buffer[curr_channel]));*/
         }
       }

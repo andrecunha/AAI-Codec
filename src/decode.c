@@ -170,10 +170,14 @@ void dec_huffman(FILE *in_fp)
         binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
         b_from_uint32_all(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_block);
 
-        printf("######################### max_bits = %"PRIu32"\n", max_bits[curr_channel]);
+        /*printf("######################### max_bits = %"PRIu32"\n", max_bits[curr_channel]);
         printf("######################### numero de bits: %lu \n", output_buffer[curr_channel].n_bytes*8 - (8-output_buffer[curr_channel].bits_last));
-        printf("######################### output_length: %"PRIu32"\n", output_length);
+        printf("######################### output_length: %"PRIu32"\n", output_length);*/
         /*bprint(&output_buffer[curr_channel]);*/
+
+        printf("######################## APOS O HUFFMAN NO DECODE: \n");
+        bprint(&(output_buffer[curr_channel]));
+
     }
 }
 

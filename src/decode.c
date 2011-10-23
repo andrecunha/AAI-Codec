@@ -118,7 +118,11 @@ void dec_prepare_output_file (FILE *fp)
         bdestroy(&data_buffer[curr_channel]);
         if(frequencies && frequencies[curr_channel])
             free(frequencies[curr_channel]);
+        if(vector[curr_channel])
+            free(vector[curr_channel]);
     }
+    free(size_vector);
+    free(vector);
     if(nbits_run)
         free(nbits_run);
     if(nbits_code)
@@ -170,9 +174,6 @@ void dec_huffman(FILE *in_fp)
         binit(&output_buffer[curr_channel], input_file_header->subchunk2size);
         b_from_uint32_all(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_block);
 
-        printf("######################### max_bits = %"PRIu32"\n", max_bits[curr_channel]);
-        printf("######################### numero de bits: %lu \n", output_buffer[curr_channel].n_bytes*8 - (8-output_buffer[curr_channel].bits_last));
-        printf("######################### output_length: %"PRIu32"\n", output_length);
         /*bprint(&output_buffer[curr_channel]);*/
     }
 }
@@ -219,7 +220,7 @@ void dec_delta(FILE *in_fp)
         output_vector[curr_channel] = calloc(output_length, sizeof(uint32_t));
 
         memset(output_vector[curr_channel], 0, output_length);
-
+        printf("AUIIIIIIIII");
         if(first_enc==DELTA)
             dt_decode(&output_buffer[curr_channel], max_bits[curr_channel], output_vector[curr_channel], output_length, input_file_header->bitsPerSample, firsts[curr_channel]);
         else
@@ -235,6 +236,7 @@ void dec_delta(FILE *in_fp)
             b_from_uint32_all(&output_buffer[curr_channel], output_vector[curr_channel], output_length, nbits_code[curr_channel]+nbits_run[curr_channel]);
 
         /*bprint(&output_buffer[curr_channel]);*/
+        /*bprint( &(output_buffer[curr_channel]));*/
     }
 }
 
